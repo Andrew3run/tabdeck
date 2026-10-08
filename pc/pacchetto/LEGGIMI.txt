@@ -1,0 +1,253 @@
+TabDeck - installazione su un PC nuovo
+======================================
+
+TabDeck trasforma un Samsung Galaxy Tab 3 7.0 (SM-T210, Android 4.4) in due
+cose collegate al PC via cavo o via rete: un secondo monitor vero, e uno
+stream deck. Sul PC c'e' una finestra, e ogni cosa si comanda a mano da li'.
+Non c'e' nessun servizio, nessun avvio automatico, niente che decida da solo.
+
+
+LA STRADA CORTA
+---------------
+
+Tre doppi clic, in quest'ordine:
+
+ 1. Installa.bat     mette il programma sul PC. Windows chiede il consenso una
+                     volta: serve per il driver dello schermo e per il firewall.
+ 2. Tablet.bat       col tablet attaccato al cavo, ci mette l'app.
+ 3. TabDeck          dal menu Start, o dal collegamento sul desktop.
+
+Se qualcosa si ferma, la finestra nera resta aperta e dice cosa manca: non si
+chiude da sola, apposta.
+
+Poi, una volta e quando vuoi, c'e' Alleggerisci.bat: mette a riposo le
+applicazioni Android che al tablet non servono. Non fa parte
+dell'installazione, chiede conferma, e si torna indietro con Ripristina.bat.
+
+I .bat non fanno niente di loro: chiamano gli script .ps1 qui accanto. Esistono
+perche' un doppio clic su un .ps1 lo apre nel Blocco note invece di eseguirlo, e
+perche' l'installazione vuole i permessi di amministratore.
+
+La guida distesa - cosa fa ogni passo, e cosa fare quando non va - e' in
+GUIDA.md, qui accanto.
+
+Se hai TabDeck-Setup.exe, questa cartella non ti serve: doppio clic sull'exe,
+rispondi di si' alla domanda, dai il consenso a Windows, ed e' fatta. Dentro
+c'e' esattamente quello che c'e' qui, e a installarlo e' lo stesso
+Installa.ps1.
+
+
+A MANO, DA POWERSHELL
+---------------------
+
+Per chi vuole le opzioni, o non si fida di un .bat:
+
+ 1. Copia questa cartella dove vuoi sul PC nuovo.
+ 2. Tasto destro su "Windows PowerShell" > Esegui come amministratore.
+ 3. Dentro la cartella:
+
+        cd 'C:\dove\l''hai\messa'
+        .\Installa.ps1
+
+ 4. Attacca il tablet col cavo e lancia:
+
+        .\Tablet.ps1
+
+ 5. Apri TabDeck dal menu Start.
+
+Se PowerShell rifiuta di eseguire gli script, per questa sola finestra:
+
+        Set-ExecutionPolicy -Scope Process Bypass
+
+
+COSA FA Installa.ps1
+--------------------
+
+  cartella    copia il programma in C:\TabDeck (si cambia con -Dove)
+  schermo     mette il Virtual Display Driver in C:\VirtualDisplayDriver,
+              lo registra in Windows e crea il monitor virtuale
+  usb         se nel pacchetto c'e' un driver USB, lo mette nel magazzino
+  firewall    apre udp 8766 e 8767 in entrata, e il programma
+  avvio       crea l'attivita' pianificata "TabDeck" - nessun orario, nessun
+              avvio automatico - e i collegamenti che ci passano, cosi' Windows
+              non chiede il consenso a ogni apertura
+  tablet      lascia in C:\TabDeck l'APK, Tablet.ps1 e Tablet.bat, cosi' per
+              rimettere l'app sul tablet non serve piu' ritrovare il pacchetto
+  icone       un collegamento nel menu Start e uno sul desktop
+
+Tutto quello che fa si disfa con Disinstalla.bat, o con .\Disinstalla.ps1.
+
+Le opzioni: -Dove <cartella>, -SenzaDriver, -SenzaFirewall, -SenzaCollegamenti,
+-SenzaAttivita.
+
+
+PERCHE' TABDECK VUOLE L'AMMINISTRATORE
+--------------------------------------
+
+Per due cose sole: accendere e spegnere il monitor virtuale (sono
+Enable-PnpDevice e Disable-PnpDevice) e mandare i tocchi del tablet anche alle
+finestre che girano elevate, cosa che Windows vieta a un programma normale.
+Senza elevazione TabDeck funziona lo stesso, ma il consenso lo chiede a ogni
+"Manda lo schermo" e a ogni "Ferma": piu' richieste, non meno.
+
+Installa.ps1 lo dice a Windows una volta sola creando un'attivita' pianificata
+di nome TabDeck. Non ha orario e non parte all'accesso: porta con se' soltanto
+il livello dei permessi, e si muove quando premi il collegamento. Da quel
+momento chiunque possa premere quel collegamento fa partire un programma
+elevato senza vedere nessuna domanda: su una macchina propria e' quello che si
+vuole, su una condivisa e' una cosa da sapere.
+
+Per tornare indietro, dalla cartella:
+
+    .\Avvio.ps1 -Ese C:\TabDeck\app\TabDeck.exe -Diretto
+
+
+COSA C'E' DENTRO
+----------------
+
+  Installa.bat        installa su questo PC (chiede il consenso)
+  Tablet.bat          mette l'app sul tablet attaccato col cavo
+  Alleggerisci.bat    mette a riposo le app Android che non servono
+  Ripristina.bat      le rimette in servizio
+  Disinstalla.bat     toglie tutto quello che Installa.bat aveva messo
+  GUIDA.md            la guida distesa
+  Installa.ps1  Tablet.ps1  Disinstalla.ps1  Avvio.ps1
+                      gli script veri: i .bat non fanno che chiamarli
+  app\                il programma. Se dentro c'e' System.Private.CoreLib.dll,
+                      .NET e' compreso e non serve installare niente
+  tools\              adb, per il collegamento col cavo e per l'app del tablet
+  driver\schermo\     Virtual Display Driver (MttVDD): il monitor virtuale
+  driver\usb\         il driver USB del tablet, se chi ha fatto il pacchetto
+                      ne aveva uno da esportare
+  tablet\TabDeck.apk  l'app del tablet, gia' compilata
+  tablet\sistema\     la pulizia del sistema Android: alleggerisci.ps1,
+                      ripristina.ps1, batteria.ps1, e i due elenchi
+                      bloccati.txt (chi va a riposo) e tenere.txt (chi resta)
+  config\             deck, icone e luci, solo se il pacchetto e' stato fatto
+                      con -ConConfig
+  versione.txt        quando e' stato fatto, e con cosa dentro
+
+
+IL DRIVER DELLO SCHERMO VIRTUALE
+--------------------------------
+
+Windows non lascia trascinare una finestra dove non c'e' un monitor: perche' il
+tablet sia un secondo schermo e non una fotografia del primo, serve che un
+monitor in piu' esista davvero. Lo crea il Virtual Display Driver.
+
+Il catalogo del driver e' firmato da SignPath Foundation con CA GlobalSign,
+quindi Windows lo accetta senza toccare nessun archivio di certificati. Il
+driver e' inerte finche' TabDeck non accende il monitor, e sparisce quando si
+preme Ferma, quando si chiude o quando si stacca il tablet.
+
+Se nel pacchetto il driver non c'e', si prende da
+github.com/VirtualDrivers/Virtual-Display-Driver: metti MttVDD.inf, MttVDD.dll
+e mttvdd.cat in driver\schermo\ e rilancia Installa.ps1.
+
+Senza driver TabDeck funziona lo stesso: restano il deck, le luci, il timer e
+la sveglia. Manca solo il secondo monitor.
+
+
+RIMETTERE SUL TABLET UNA VERSIONE NUOVA
+---------------------------------------
+
+E' sempre Tablet.bat, e si puo' rifare quante volte si vuole. Dopo
+l'installazione sta in due posti, con l'APK accanto: in questa cartella, se te
+la sei tenuta, e in C:\TabDeck\Tablet.bat, che ci resta apposta.
+
+Reinstalla tenendo i dati (adb install -r): il deck, le luci e le icone che il
+tablet si e' salvato restano dov'erano. Non serve disinstallare prima, e non
+serve rifare la Home.
+
+Se l'APK nuovo arriva da un pacchetto nuovo, sovrascrivi tablet\TabDeck.apk e
+rilancia Tablet.bat; oppure rilancia Installa.bat, che riporta in C:\TabDeck
+anche l'APK.
+
+
+ALLEGGERIRE IL TABLET
+---------------------
+
+Alleggerisci.bat mette a riposo le applicazioni Android che a uno schermo con
+dei pulsanti non servono: Google, Samsung, widget, riproduttori, cloud, stampa.
+Su un tablet con 832 MB di RAM utili non e' un dettaglio estetico.
+
+Chiede conferma prima di muoversi, e non fa parte dell'installazione: si fa una
+volta, sul proprio tablet, guardando cosa succede.
+
+  cosa fa     "pm block" su ogni pacchetto di tablet\sistema\bloccati.txt, poi
+              "am force-stop" su quelli gia' avviati. Nasconde e impedisce di
+              ripartire all'avvio: non disinstalla niente, non serve il root
+  cosa resta  quello elencato in tablet\sistema\tenere.txt, con il perche' di
+              ognuno: framework, systemui, Impostazioni - l'unica via d'uscita
+              da TabDeck - i loro provider, adb, la tastiera, e TabDeck
+  cosa manca  su Android 4.4 qualche pacchetto privilegiato rifiuta il blocco
+              (Google Play Services): lo script li elenca e dice dove spegnerli
+              a mano, da Impostazioni > Gestione applicazioni > Tutte
+  dopo        riavvia il tablet: la misura vera e' all'avvio
+  indietro    Ripristina.bat li rimette tutti in servizio
+
+Il guadagno piu' grosso pero' non e' questo: e' TabDeck come schermata Home,
+che a TouchWiz impedisce proprio di caricarsi. Quello lo propone gia'
+Tablet.bat.
+
+
+SE IL CAVO NON VA
+-----------------
+
+Il collegamento col cavo passa da adb, e adb ha bisogno che Windows riconosca
+il tablet. Su Windows 11 di solito succede da solo. Se .\Tablet.ps1 dice che
+non vede nessun tablet:
+
+  - il debug USB dev'essere acceso sul tablet: Impostazioni > Info sul
+    dispositivo > "Numero build" toccato sette volte, poi Opzioni
+    sviluppatore > Debug USB;
+  - sblocca lo schermo del tablet: alla prima volta chiede "Consenti debug
+    USB", e finche' non si risponde adb lo vede "unauthorized";
+  - molti cavi sono di sola ricarica: provane un altro;
+  - se ancora niente, installa il driver USB Samsung
+    (developer.samsung.com/android-usb-driver) e riprova.
+
+Il collegamento in rete non ha bisogno di niente di tutto questo: basta che
+tablet e PC siano sulla stessa rete.
+
+
+IL FIREWALL
+-----------
+
+Il tablet ha in barra una freccia che entra in uno schermo: premendola manda
+in broadcast "sono qui", e il PC apre lui il collegamento. Quell'annuncio e'
+l'unico pacchetto non richiesto che TabDeck riceve, e senza una regola il
+firewall lo butta via in silenzio - il tablet direbbe "chiamata mandata" a un
+PC che non sente niente. La regola la mette Installa.ps1.
+
+
+IL DECK E LE LUCI NON ARRIVANO DA SOLI
+--------------------------------------
+
+Collegarsi non riscrive il tablet. Il tablet il suo deck e le sue luci se li
+tiene - e' cosi' che funziona a PC spento - e quello che sta sul PC puo' essere
+un montaggio lasciato a meta'. Vanno quando lo si chiede:
+
+  il deck    Uso > Deck, oppure Gestione > Pulsanti: "Manda al tablet"
+  le luci    Gestione > Luci: "Manda al tablet"
+
+Se qui c'e' qualcosa di piu' nuovo di quello che ha il tablet, la finestra lo
+dice appena ci si collega.
+
+
+PORTARE IL PROPRIO DECK
+-----------------------
+
+Da Gestione > Pulsanti, sotto PROFILO, c'e' "Esporta": scrive un file solo con
+dentro i profili scelti e le immagini dei loro pulsanti. Sull'altro PC, dalla
+stessa barra, "Importa" li aggiunge senza toccare quelli che ci sono gia'.
+
+Copiare config\deck.json a mano non basta: le icone stanno accanto, in
+config\icone, e senza di quelle arriva un deck di quadratini vuoti.
+
+
+LA FINESTRA SI CHIUDE NELL'AREA DI NOTIFICA
+-------------------------------------------
+
+La croce non spegne: ritira la finestra accanto all'orologio, e il tablet resta
+collegato. Per spegnere davvero, tasto destro sull'icona e "Esci".

@@ -1,0 +1,90 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="dev.tabdeck"
+    android:versionCode="1"
+    android:versionName="1.0">
+
+    <uses-sdk android:minSdkVersion="19" android:targetSdkVersion="19" />
+
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <!-- Trasporto WiFi: la socket in ascolto e il richiamo in broadcast con cui
+         il PC trova il tablet senza che nessuno debba leggere l'indirizzo. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <!-- Le lampade si annunciano in broadcast, e il Wi-Fi dei Samsung a volte
+         li scarta per risparmiare: con questo il tablet li sente. Si tiene
+         solo a pannello acceso, vedi Luci.avvia(). -->
+    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
+
+    <!-- Durata del pannello acceso e luminosita' di sistema, dalla pagina delle
+         impostazioni dell'app. Su Android 4.4 questo permesso e' di livello
+         normale e viene concesso all'installazione: non c'e' nessuna schermata
+         da attraversare, e il tablet non ha comunque un posto dove mostrarla.
+         Da Android 6 in poi servirebbe ACTION_MANAGE_WRITE_SETTINGS; qui no.
+
+         Restano fuori portata stay_on_while_plugged_in e wifi_sleep_policy, che
+         stanno in Settings.Global e vogliono WRITE_SECURE_SETTINGS: quelle si
+         cambiano da adb, e la pagina si limita a mostrare come sono messe. -->
+    <uses-permission android:name="android.permission.WRITE_SETTINGS" />
+
+    <!-- La sveglia e il timer. Il blocco di risveglio serve al caso che conta:
+         le sette del mattino, pannello spento, processore addormentato. Senza,
+         Android consegna la sveglia e torna a dormire prima che l'app abbia
+         fatto in tempo ad aprirsi e a suonare. Si prende con una scadenza e
+         scade da solo: su questo tablet un blocco dimenticato acceso si paga
+         in percentuali di batteria all'ora. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+    <!-- La sveglia vibra, se c'e' con cosa: il Tab 3 Wi-Fi non ha il motorino,
+         e Suoneria lo chiede prima con hasVibrator(). Permesso normale,
+         concesso all'installazione. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <supports-screens
+        android:anyDensity="true"
+        android:largeScreens="true"
+        android:normalScreens="true"
+        android:smallScreens="false" />
+
+    <application
+        android:allowBackup="false"
+        android:icon="@drawable/ic_launcher"
+        android:label="@string/app_name"
+        android:hardwareAccelerated="true"
+        android:theme="@style/TabDeckTheme">
+
+        <activity
+            android:name="dev.tabdeck.MainActivity"
+            android:label="@string/app_name"
+            android:launchMode="singleTask"
+            android:stateNotNeeded="true"
+            android:clearTaskOnLaunch="true"
+            android:screenOrientation="landscape"
+            android:configChanges="orientation|keyboardHidden|screenSize|navigation">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!-- Dove Android consegna il timer e la sveglia. Non esportato: le
+             sveglie se le manda l'app da sola, nessun altro deve poter far
+             suonare questo tablet. -->
+        <receiver
+            android:name="dev.tabdeck.Allarme"
+            android:exported="false" />
+
+        <!-- L'avvio, e le altre volte in cui le sveglie di Android spariscono o
+             puntano all'ora sbagliata: reinstallazione, ora e fuso cambiati. -->
+        <receiver android:name="dev.tabdeck.BootReceiver">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.MY_PACKAGE_REPLACED" />
+                <action android:name="android.intent.action.TIME_SET" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+            </intent-filter>
+        </receiver>
+    </application>
+</manifest>

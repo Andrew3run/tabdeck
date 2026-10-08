@@ -1,0 +1,32 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- WinExe e non Exe: e' un'applicazione con finestra, non deve aprire
+         nessun terminale dietro. -->
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net10.0-windows</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <AssemblyName>TabDeck</AssemblyName>
+    <RootNamespace>TabDeck</RootNamespace>
+    <!-- Niente InvariantGlobalization: WPF risolve le culture nei suoi
+         template (Slider e ComboBox le usano) e senza i dati ICU la finestra
+         muore all'apertura con "Cannot find non-neutral culture". -->
+    <!-- Il confronto per tessere lavora direttamente sui pixel della DIB. -->
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <UseWPF>true</UseWPF>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <ApplicationIcon>tabdeck.ico</ApplicationIcon>
+    <!-- Nessun pacchetto NuGet, in nessuna parte del progetto: la compressione
+         JPEG passa dal codificatore WIC che c'e' gia' in Windows. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!--
+      Con UseWPF il gruppo di using impliciti e' quello desktop, che non
+      comprende System.IO: senza questa riga ogni file dovrebbe dichiararlo.
+    -->
+    <Using Include="System.IO" />
+  </ItemGroup>
+
+</Project>

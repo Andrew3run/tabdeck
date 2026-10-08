@@ -1,0 +1,25 @@
+# Build
+pc/TabDeck.App/bin/
+pc/TabDeck.App/obj/
+pc/app/
+pc/app-nuovo/
+tablet/build/
+/pacchetto/
+*.user
+.vs/
+
+# La chiave che firma l'APK e le estensioni: chi la ha puo' mandare codice al
+# tablet. build.ps1 ne crea una nuova se manca.
+tablet/keystore/
+
+# I dati di chi lo usa: deck, luci con le chiavi, OBS e Twitch, foto.
+# L'applicazione ricrea tutto da sola.
+config/*
+!config/.gitkeep
+
+# adb e gli altri strumenti di Google: si scaricano a parte (vedi README).
+tools/platform-tools/
+
+# Copie del tablet e note personali
+backup-tablet/
+CLAUDE.md

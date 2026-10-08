@@ -1,0 +1,31 @@
+# Pacchetti che restano attivi sul tablet. Tutto il resto viene bloccato da
+# tablet/sistema/alleggerisci.ps1.
+#
+# La regola: resta acceso solo cio' che serve ad avviare il dispositivo, a
+# parlare con il PC e a rientrare nelle impostazioni. Tutto il resto — Google,
+# Samsung, widget, riproduttori, stampa, cloud — non serve a un tablet che fa
+# lo schermo e il deck.
+
+android                          # framework: senza questo non si accende niente
+com.android.systemui             # barra di stato e gestione finestre
+com.android.settings             # unica via d'uscita da TabDeck
+com.android.providers.settings   # database delle impostazioni
+com.android.shell                # adb
+com.android.packageinstaller     # installare gli aggiornamenti di TabDeck
+com.android.defcontainer         # servizio che affianca l'installazione
+com.android.keychain             # il framework ci si aggancia all'avvio
+com.android.certinstaller        # richiesto da keychain
+com.android.externalstorage      # /sdcard, serve anche agli screenshot via adb
+com.android.providers.media      # idem
+com.android.providers.downloads  # DownloadManager e' un servizio di sistema
+com.android.inputdevices         # gestione del touch
+com.android.providers.userdictionary  # la tastiera lo pretende
+com.android.keyguard             # schermata di blocco: toglierla rischia l'avvio
+com.android.phone                # il framework si lega alla telefonia anche sui wifi-only
+com.android.bluetooth            # stack bluetooth: il servizio di sistema lo cerca
+com.sec.android.inputmethod      # l'unica tastiera: serve per la password del wifi
+com.sec.android.app.keyguard     # blocco schermo Samsung, gemello di com.android.keyguard
+com.sec.android.providers.security    # keystore
+com.marvell.graphics.ceu         # roba della GPU Vivante: non si tocca
+com.marvell.usbsetting           # modalita' USB, quindi adb
+dev.tabdeck                      # noi

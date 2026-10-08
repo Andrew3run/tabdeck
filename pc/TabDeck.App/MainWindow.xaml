@@ -1,0 +1,1952 @@
+<Window x:Class="TabDeck.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="clr-namespace:TabDeck"
+        Title="TabDeck" Height="820" Width="1340" MinHeight="620" MinWidth="880"
+        Background="{StaticResource Sfondo}"
+        TextOptions.TextFormattingMode="Ideal"
+        WindowStartupLocation="CenterScreen">
+
+    <!--
+        La finestra e' divisa in due, e la divisione e' la barra di sinistra.
+
+        Sopra la riga « USO » c'e' quello che si fa tutti i giorni: guardare se
+        il tablet risponde, mandargli lo schermo, premere un pulsante, accendere
+        una lampada. Sotto « GESTIONE » c'e' quello che si tocca una volta e poi
+        si dimentica: il driver, la risoluzione, l'indirizzo, i pulsanti da
+        montare, le chiavi delle lampade.
+
+        Prima erano tutte schede in fila, allo stesso peso, e la finestra
+        sembrava un pannello di controllo dove la cosa piu' comune stava accanto
+        a quella che si fa una volta l'anno.
+    -->
+
+    <DockPanel>
+
+        <!-- ==================================================================
+             INTESTAZIONE
+
+             Il nome e lo stato, niente altro. I comandi del collegamento sono
+             scesi nella dashboard, dove stanno con la cosa che descrivono: la
+             pastiglia dello stato ci porta con un colpo solo.
+             ================================================================== -->
+        <Border DockPanel.Dock="Top" Background="{StaticResource VeloIntestazione}"
+                BorderBrush="{StaticResource Bordo}" BorderThickness="0,0,0,1" Padding="18,11">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="*" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+                    <Border Width="30" Height="30" CornerRadius="9"
+                            Background="{StaticResource Marchio}" VerticalAlignment="Center">
+                        <Viewbox Width="16" Height="16">
+                            <Path Width="24" Height="24" Data="{Binding Source=layout-grid, Converter={StaticResource FormaIcona}}"
+                                  Stroke="White" StrokeThickness="2" StrokeLineJoin="Round"
+                                  StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                        </Viewbox>
+                    </Border>
+                    <StackPanel Margin="11,0,0,0" VerticalAlignment="Center">
+                        <TextBlock Text="TabDeck" Style="{StaticResource Titolo}" />
+                        <TextBlock x:Name="TestoSottotitolo" Visibility="Collapsed" />
+                    </StackPanel>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock x:Name="TestoBanda" Margin="0,0,14,0" VerticalAlignment="Center"
+                               FontFamily="Consolas" Foreground="{StaticResource TestoTenue}" />
+                    <Button x:Name="BtnStato" Style="{StaticResource Tenue}" Padding="13,6"
+                            MinWidth="0" ToolTip="Vai alla dashboard" Click="Stato_Click">
+                        <StackPanel Orientation="Horizontal">
+                            <Ellipse x:Name="SpiaStato" Width="8" Height="8" VerticalAlignment="Center"
+                                     Fill="{StaticResource Spento}" />
+                            <TextBlock x:Name="TestoStato" Text="Scollegato" Margin="9,0,0,0"
+                                       VerticalAlignment="Center" Foreground="{StaticResource Testo}" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <!-- Ultimo messaggio, sempre in vista: il registro completo sta nella
+             pagina apposta, in fondo alla gestione. -->
+        <Border DockPanel.Dock="Bottom" Background="{StaticResource Pannello}"
+                BorderBrush="{StaticResource Bordo}" BorderThickness="0,1,0,0" Padding="18,8">
+            <StackPanel Orientation="Horizontal">
+                <Ellipse x:Name="SpiaMessaggio" Width="6" Height="6" VerticalAlignment="Center"
+                         Fill="{StaticResource TestoTenue}" />
+                <TextBlock x:Name="TestoOra" Margin="10,0,0,0" FontFamily="Consolas"
+                           Foreground="{StaticResource TestoTenue}" />
+                <TextBlock x:Name="TestoMessaggio" Margin="10,0,0,0" Text="Pronto."
+                           Foreground="{StaticResource TestoTenue}" TextTrimming="CharacterEllipsis" />
+            </StackPanel>
+        </Border>
+
+        <TabControl x:Name="Schede">
+
+            <TabItem Header="USO" Style="{StaticResource GruppoBarra}" />
+
+            <!-- ============================ PLANCIA ============================
+                 Tutto quello che si guarda e si preme senza aprire niente: lo
+                 stato del collegamento, le misure mentre gira, il deck com'e'
+                 adesso, le routine di casa.
+                 ================================================================ -->
+            <TabItem x:Name="SchedaDashboard" Header="Dashboard" Tag="gauge">
+                <!--
+                    Cinque riquadri su una griglia, non una pila di schede in
+                    una colonna con l'altra meta' della pagina vuota.
+
+                    Il deck sta in basso e si prende quello che avanza: e'
+                    l'unico riquadro che sa crescere — la griglia del tablet e'
+                    larga 1024 e alta 600, e in uno spazio basso e largo ci sta
+                    intera. Gli altri quattro hanno l'altezza del loro contenuto
+                    e stanno sopra.
+
+                    La finestra stretta mette tutto in colonna: e' MainWindow.
+                    Misure.cs a spostare i riquadri, e sono gli unici numeri di
+                    riga e colonna che non stanno scritti qui.
+                -->
+                <!-- Lo scorrimento e' spento finche' la pagina ci sta: dentro
+                     uno ScrollViewer che scorre lo spazio in altezza e' infinito,
+                     e un riquadro che dice « prendo quel che avanza » non avrebbe
+                     niente da prendere. Con la finestra stretta i riquadri vanno
+                     in colonna, la pagina diventa piu' alta della finestra, e
+                     allora lo scorrimento serve: lo riaccende MainWindow.Misure.cs. -->
+                <ScrollViewer x:Name="ScorriDashboard" VerticalScrollBarVisibility="Disabled">
+                    <Grid Margin="{DynamicResource SpazioPagina}">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*" MinWidth="380" />
+                            <ColumnDefinition x:Name="DashDestra" Width="384" />
+                        </Grid.ColumnDefinitions>
+                        <Grid.RowDefinitions>
+                            <RowDefinition x:Name="DashRiga0" Height="Auto" />
+                            <RowDefinition x:Name="DashRiga1" Height="Auto" />
+                            <RowDefinition x:Name="DashRiga2" Height="*" />
+                            <RowDefinition x:Name="DashRiga3" Height="0" />
+                            <RowDefinition x:Name="DashRiga4" Height="0" />
+                        </Grid.RowDefinitions>
+
+                        <!-- ============ come sta il collegamento ============ -->
+                        <Border x:Name="RiquadroCollegamento" Grid.Row="0" Grid.Column="0" Style="{StaticResource Scheda}" Margin="0,0,16,0" Padding="20,18,20,20">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Ellipse x:Name="DashboardSpia" Width="9" Height="9"
+                                             VerticalAlignment="Center" Fill="{StaticResource Spento}" />
+                                    <TextBlock Text="COLLEGAMENTO" Style="{StaticResource Occhiello}"
+                                               Margin="9,0,0,0" VerticalAlignment="Center" />
+                                </StackPanel>
+
+                                <TextBlock x:Name="DashboardStato" Style="{StaticResource Grande}"
+                                           Margin="0,11,0,0" Text="Scollegato" />
+                                <TextBlock x:Name="DashboardDettaglio" Style="{StaticResource Aiuto}"
+                                           Margin="0,6,0,0" MaxWidth="560" HorizontalAlignment="Left"
+                                           Text="Attacca il cavo e premi « Collega col cavo », oppure accendi il tablet sulla rete di casa e premi « Collega in rete »: l'indirizzo lo trova da solo." />
+
+                                <WrapPanel Margin="0,16,0,0">
+                                    <Button x:Name="BtnUsb" Content="Collega col cavo" MinWidth="150"
+                                            Margin="0,0,9,8" Style="{StaticResource Grosso}"
+                                            ToolTip="Collegamento via adb: circa 7 MB/s, e' quello per lavorarci."
+                                            Click="CollegaUsb_Click" />
+                                    <Button x:Name="BtnWifi" Content="Collega in rete" MinWidth="150"
+                                            Margin="0,0,9,8" Style="{StaticResource Grosso}"
+                                            ToolTip="Cerca il tablet sulla rete locale se il campo indirizzo e' vuoto."
+                                            Click="CollegaWifi_Click" />
+                                    <Button x:Name="BtnScollega" Content="Scollega" MinWidth="118"
+                                            Margin="0,0,9,8" Style="{StaticResource Grosso}"
+                                            Visibility="Collapsed" Click="Scollega_Click" />
+                                    <Button x:Name="BtnSchermo" Content="Manda lo schermo" MinWidth="176"
+                                            Margin="0,0,0,8" IsEnabled="False"
+                                            Style="{StaticResource PrimarioGrosso}" Click="Schermo_Click" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ============ cosa fa vedere il pannello ============ -->
+                        <Border x:Name="DashTablet" Grid.Row="0" Grid.Column="1"
+                                Style="{StaticResource Scheda}" Padding="20,18,20,20">
+                            <StackPanel>
+                                <TextBlock Text="SUL TABLET" Style="{StaticResource Occhiello}" />
+                                <Border Style="{StaticResource Barra}" HorizontalAlignment="Stretch">
+                                    <WrapPanel>
+                                        <Button Style="{StaticResource Comando}" Content="Deck"
+                                                ToolTip="Fa' vedere il deck sul tablet" Click="MostraDeck_Click" />
+                                        <Button Style="{StaticResource Comando}" Content="Schermo"
+                                                ToolTip="Fa' vedere lo schermo del PC" Click="MostraSchermo_Click" />
+                                        <Border Style="{StaticResource Divisore}" />
+                                        <Button Style="{StaticResource Comando}" Content="Apri barra"
+                                                ToolTip="Apre la barra laterale del tablet: gli restano 952 pixel."
+                                                Click="BarraApri_Click" />
+                                        <Button Style="{StaticResource Comando}" Content="Chiudi barra"
+                                                ToolTip="Chiusa, al tablet arrivano tutti e 1024 i pixel."
+                                                Click="BarraChiudi_Click" />
+                                    </WrapPanel>
+                                </Border>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- ============ le tre misure, in fila ============ -->
+                        <UniformGrid x:Name="DashMisure" Grid.Row="1" Grid.Column="0" Grid.ColumnSpan="2"
+                                     Columns="3" Margin="0,16,0,0">
+                            <Border Style="{StaticResource Misuratore}" Margin="0,0,8,0">
+                                <StackPanel>
+                                    <!-- L'occhiello cambia con la scelta: da quando si puo'
+                                         mandare anche un monitor vero, scrivere sempre
+                                         « schermo virtuale » sarebbe una bugia. -->
+                                    <TextBlock x:Name="DashboardSchermoTitolo" Text="SCHERMO VIRTUALE"
+                                               Style="{StaticResource Occhiello}" />
+                                    <TextBlock x:Name="DashboardSchermo" Style="{StaticResource Misura}"
+                                               Margin="0,7,0,0" Text="Spento" />
+                                    <TextBlock x:Name="DashboardDriver" Style="{StaticResource Aiuto}"
+                                               Margin="0,3,0,0" Text="Driver non cercato." />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Misuratore}" Margin="8,0,8,0">
+                                <StackPanel>
+                                    <TextBlock Text="BANDA" Style="{StaticResource Occhiello}" />
+                                    <TextBlock x:Name="DashboardBanda" Style="{StaticResource Misura}"
+                                               FontFamily="Consolas" Margin="0,7,0,0" Text="&#x2014;" />
+                                </StackPanel>
+                            </Border>
+
+                            <Border Style="{StaticResource Misuratore}" Margin="8,0,0,0">
+                                <StackPanel>
+                                    <TextBlock Text="IMMAGINE" Style="{StaticResource Occhiello}" />
+                                    <TextBlock x:Name="DashboardImmagine" Style="{StaticResource Misura}"
+                                               Margin="0,7,0,0" Text="&#x2014;" />
+                                    <TextBlock x:Name="DashboardQualita" Style="{StaticResource Aiuto}"
+                                               Margin="0,3,0,0" Text="Si cambia in Schermo." />
+                                </StackPanel>
+                            </Border>
+                        </UniformGrid>
+
+                        <!-- ============ il deck, che si prende quel che avanza ============ -->
+                        <Border x:Name="DashDeck" Grid.Row="2" Grid.Column="0"
+                                Style="{StaticResource Scheda}" Margin="0,16,16,0">
+                            <DockPanel>
+                                <TextBlock DockPanel.Dock="Top" Text="IL DECK, ADESSO"
+                                           Style="{StaticResource Occhiello}" />
+                                <Border Margin="0,10,0,0" CornerRadius="9" MinHeight="150"
+                                        Background="{StaticResource Campo}"
+                                        BorderBrush="{StaticResource Bordo}" BorderThickness="1"
+                                        Padding="7">
+                                    <local:AnteprimaDeck x:Name="AnteprimaViva" />
+                                </Border>
+                            </DockPanel>
+                        </Border>
+
+                        <!-- ============ le routine di casa ============ -->
+                        <Border x:Name="RiquadroRoutineVive" Grid.Row="2" Grid.Column="1"
+                                Style="{StaticResource Scheda}" Margin="0,16,0,0"
+                                VerticalAlignment="Top" Visibility="Collapsed">
+                            <StackPanel>
+                                <TextBlock Text="ROUTINE DI CASA" Style="{StaticResource Occhiello}" />
+                                <WrapPanel x:Name="RoutineVive" />
+                            </StackPanel>
+                        </Border>
+                    </Grid>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- =========================== DECK (USO) ===========================
+                 Il deck come sta sul tablet, alla stessa scala e con le stesse
+                 misure: 1024x600 disegnati a densita' uno e poi ingranditi.
+
+                 Due modi, e si sceglie con un pulsante: **Premi**, che e' quel
+                 che si fa tutti i giorni, e **Disponi**, dove i pulsanti si
+                 trascinano. Disporli qui e non solo nell'anteprima dell'editor
+                 e' tutta un'altra cosa: qui la griglia e' grande quanto la
+                 finestra, e si prende la mira con il mouse invece che con la
+                 punta di uno spillo.
+                 ================================================================== -->
+            <TabItem x:Name="SchedaDeckVivo" Header="Deck" Tag="layout-grid">
+                <DockPanel Margin="{DynamicResource SpazioPagina}">
+
+                    <!-- I comandi su una riga e la spiegazione su quella
+                         sotto, invece che tutt'e due sulla stessa: appaiati,
+                         stringendo la finestra la spiegazione schiaccia i
+                         comandi finche' non li fa sparire. -->
+                    <DockPanel DockPanel.Dock="Top" LastChildFill="False" Margin="0,0,0,8">
+                        <ToggleButton x:Name="BtnDisponi" DockPanel.Dock="Left"
+                                      Style="{StaticResource Gettone}" Width="152" Height="30"
+                                      FontSize="12.5" Margin="0,0,16,0" Content="Disponi i pulsanti"
+                                      ToolTip="Accendendolo i pulsanti si trascinano invece di premerli."
+                                      Checked="Disponi_Checked" Unchecked="Disponi_Unchecked" />
+
+                        <!-- Il profilo si cambia anche da qui: e' la pagina che
+                             si guarda mentre si lavora, ed e' li' che viene
+                             voglia di passare al deck dell'altra cosa. -->
+                        <TextBlock DockPanel.Dock="Left" Text="Profilo" VerticalAlignment="Center"
+                                   Margin="0,0,8,0" Foreground="{StaticResource TestoTenue}" />
+                        <ComboBox DockPanel.Dock="Left" x:Name="ElencoProfiliVivo" Width="170"
+                                  Margin="0,0,16,0" VerticalAlignment="Center"
+                                  SelectionChanged="ProfiloVivo_Changed" />
+
+                        <StackPanel x:Name="RigaSalvaDeckVivo" DockPanel.Dock="Right"
+                                    Orientation="Horizontal" Visibility="Collapsed">
+                            <TextBlock x:Name="TestoDeckVivoSalvato" VerticalAlignment="Center"
+                                       Margin="0,0,12,0" Foreground="{StaticResource TestoTenue}" />
+                            <Button Content="Salva e manda al tablet" MinWidth="0" Padding="14,5"
+                                    Style="{StaticResource Primario}" Click="SalvaDeck_Click" />
+                        </StackPanel>
+
+                        <!-- Questa e' la pagina che si guarda appena collegati,
+                             ed e' li' che serve: il deck di qua va di la'
+                             quando lo si chiede, non da solo. -->
+                        <Button DockPanel.Dock="Right" x:Name="BtnMandaDeckVivo"
+                                Content="Manda al tablet" MinWidth="0" Padding="14,5" Margin="0,0,8,0"
+                                VerticalAlignment="Center" Click="MandaDeck_Click"
+                                ToolTip="Manda al tablet il profilo di adesso. Il collegamento da solo non lo manda." />
+                    </DockPanel>
+
+                    <TextBlock DockPanel.Dock="Top" x:Name="TestoModoDeck"
+                               Style="{StaticResource Aiuto}" TextWrapping="Wrap"
+                               Margin="0,0,0,12" Visibility="Collapsed" />
+
+                    <DockPanel DockPanel.Dock="Bottom" Margin="0,14,0,0">
+                        <StackPanel x:Name="RigaPagineDeck" DockPanel.Dock="Right"
+                                    Orientation="Horizontal" Visibility="Collapsed">
+                            <Button Content="&#x25C0;" MinWidth="0" Padding="12,5"
+                                    Style="{StaticResource Tenue}" Click="PaginaDeckGiu_Click" />
+                            <TextBlock x:Name="TestoPaginaDeck" VerticalAlignment="Center"
+                                       Margin="12,0,12,0" Foreground="{StaticResource TestoTenue}"
+                                       Text="Pagina 1 di 1" />
+                            <Button Content="&#x25B6;" MinWidth="0" Padding="12,5"
+                                    Style="{StaticResource Tenue}" Click="PaginaDeckSu_Click" />
+                        </StackPanel>
+                    </DockPanel>
+
+                    <!-- A larghezza 1024 il disegno usa le misure del pannello,
+                         quelle di DeckView: il riquadro le ingrandisce senza
+                         rifare i conti, e quel che si vede e' quel che esce di
+                         la'. -->
+                    <!-- La sagoma del tablet attorno al deck: si capisce a
+                         colpo d'occhio che quella griglia e' lo schermo di la'. -->
+                    <Viewbox Stretch="Uniform" StretchDirection="Both">
+                        <Border Style="{StaticResource Sagoma}">
+                            <local:AnteprimaDeck x:Name="DeckVivo" Width="1024" Height="600" />
+                        </Border>
+                    </Viewbox>
+                </DockPanel>
+            </TabItem>
+
+            <!-- ============================= CASA =============================
+                 Il pannello vero delle lampade. Non c'e' niente da configurare:
+                 si preme e la luce cambia.
+                 ================================================================ -->
+            <TabItem Header="Casa" Tag="house">
+                <DockPanel Margin="{DynamicResource SpazioPagina}">
+                    <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
+                        <TextBlock Text="Casa" Style="{StaticResource TitoloPagina}" />
+                    </StackPanel>
+
+                    <Border DockPanel.Dock="Bottom" Margin="0,14,0,0" Padding="0,10,0,0"
+                            BorderThickness="0,1,0,0" BorderBrush="{StaticResource Bordo}">
+                        <TextBlock x:Name="TestoPannello" TextWrapping="Wrap"
+                                   Foreground="{StaticResource TestoTenue}" Text="" />
+                    </Border>
+
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" Padding="0,0,8,0">
+                        <StackPanel x:Name="Pannello" />
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+
+            <TabItem Header="GESTIONE" Style="{StaticResource GruppoBarra}" />
+
+            <!-- ============================= DECK =============================
+
+                 Tre colonne, e l'ordine e' quello in cui si lavora: a sinistra
+                 quali pulsanti ci sono e dove stanno, in mezzo com'e' fatto
+                 quello scelto, a destra come lo vedra' il tablet.
+
+                 Le cartelle attraversano tutte e tre: la colonna di sinistra ne
+                 mostra il contenuto e il percorso per uscirne, l'anteprima
+                 disegna quella aperta con la sua fascia in cima — la stessa che
+                 disegna il tablet — e il pannello di mezzo, per una cartella,
+                 smette di parlare di azioni e parla di cosa contiene.
+                 ================================================================= -->
+            <TabItem x:Name="SchedaDeck" Header="Pulsanti" Tag="square-pen">
+                <Grid Margin="{DynamicResource SpazioPagina}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="DeckElenco" Width="296" />
+                        <!-- Lo spazio che avanza su uno schermo largo va
+                             all'anteprima, non ai campi: una casella di testo
+                             lunga mezzo metro non si legge meglio, una griglia
+                             grande si usa meglio.
+
+                             Quando la finestra si stringe la terza colonna si
+                             chiude e l'anteprima passa sopra i campi, dentro
+                             la stessa colonna: tre colonne su uno schermo
+                             piccolo sono tre strisce, e nessuna delle tre
+                             serve piu' a niente. -->
+                        <ColumnDefinition x:Name="DeckDettaglio" Width="1.35*" MinWidth="380" />
+                        <ColumnDefinition x:Name="DeckAnteprima" Width="*" MinWidth="320" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.ColumnSpan="3" Margin="0,0,0,16">
+                        <TextBlock Text="I pulsanti del deck" Style="{StaticResource TitoloPagina}" />
+                    </StackPanel>
+
+                    <!-- i pulsanti della cartella aperta, in ordine -->
+                    <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,16,0">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="Auto" />
+                            <RowDefinition Height="*" />
+                            <RowDefinition Height="Auto" />
+                        </Grid.RowDefinitions>
+
+                        <!-- ===================== IL PROFILO =====================
+                             Un deck solo non basta appena il tablet serve a due
+                             cose diverse. Il profilo si cambia da qui, e la
+                             griglia intera cambia con lui; il file li tiene
+                             tutti, e cambiare profilo lo salva. -->
+                        <TextBlock Grid.Row="0" Text="PROFILO" Style="{StaticResource Occhiello}"
+                                   Margin="2,0,0,7" />
+
+                        <ComboBox Grid.Row="1" x:Name="ElencoProfili" Margin="0,0,0,6"
+                                  SelectionChanged="Profilo_Changed"
+                                  ToolTip="Quale deck sta sul tablet. Cambiandolo, il deck viene salvato e al tablet va la griglia nuova." />
+
+                        <Border Grid.Row="2" Style="{StaticResource Barra}" Margin="0,0,0,14"
+                                HorizontalAlignment="Stretch">
+                            <WrapPanel>
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Nuovo"
+                                        Click="NuovoProfilo_Click"
+                                        ToolTip="Un profilo vuoto, con la stessa griglia di questo." />
+                                <Button Style="{StaticResource Comando}" Content="Duplica"
+                                        Click="DuplicaProfilo_Click"
+                                        ToolTip="Una copia di questo profilo, pulsanti compresi." />
+                                <Button Style="{StaticResource Comando}" Content="Rinomina"
+                                        Click="RinominaProfilo_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <!-- Un profilo esce di qui in un file solo,
+                                     immagini comprese: copiare deck.json non
+                                     basta, perche' le icone stanno accanto e
+                                     di la' non ci sarebbero. -->
+                                <Button Style="{StaticResource Comando}" Content="Esporta"
+                                        Click="EsportaProfili_Click"
+                                        ToolTip="Scrive un file con dentro i profili scelti e le loro icone." />
+                                <Button Style="{StaticResource Comando}" Content="Importa"
+                                        Click="ImportaProfili_Click"
+                                        ToolTip="Aggiunge i profili di un file esportato, senza toccare quelli che ci sono." />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                        Click="TogliProfilo_Click"
+                                        ToolTip="Butta via questo profilo e tutti i suoi pulsanti." />
+                            </WrapPanel>
+                        </Border>
+
+                        <!-- Quanto portarsi via. Sta qui sotto e non in una
+                             finestrella, come il nome: sono due risposte, e due
+                             risposte non meritano una finestra sopra quella che
+                             si stava guardando. -->
+                        <Border Grid.Row="3" x:Name="RigaEsporta" Visibility="Collapsed"
+                                Style="{StaticResource Riquadro}" Padding="10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock Style="{StaticResource Aiuto}" Margin="0,0,0,7"
+                                           TextWrapping="Wrap"
+                                           Text="Che cosa metto nel file? Dentro ci vanno anche le icone dei pulsanti." />
+                                <Button x:Name="BtnEsportaUno" Margin="0,0,0,6" HorizontalAlignment="Stretch"
+                                        MinWidth="0" Padding="11,4" Style="{StaticResource Primario}"
+                                        Click="EsportaUno_Click" />
+                                <Button x:Name="BtnEsportaTutti" Margin="0,0,0,8" HorizontalAlignment="Stretch"
+                                        MinWidth="0" Padding="11,4" Click="EsportaTutti_Click" />
+                                <Button Content="Lascia stare" MinWidth="0" Padding="11,4"
+                                        HorizontalAlignment="Left"
+                                        Style="{StaticResource Tenue}" Click="AnnullaEsporta_Click" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Il nome si chiede qui e non in una finestrella a
+                             parte: e' una riga sola, e una riga sola non merita
+                             una finestra che copre quello che si stava
+                             guardando. -->
+                        <Border Grid.Row="3" x:Name="RigaNomeProfilo" Visibility="Collapsed"
+                                Style="{StaticResource Riquadro}" Padding="10" Margin="0,0,0,12">
+                            <StackPanel>
+                                <TextBlock x:Name="TestoNomeProfilo" Style="{StaticResource Aiuto}"
+                                           Margin="0,0,0,7" TextWrapping="Wrap" />
+                                <TextBox x:Name="CampoNomeProfilo" Margin="0,0,0,8"
+                                         KeyDown="CampoNomeProfilo_Tasto" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Va bene" MinWidth="0" Padding="11,4"
+                                            Style="{StaticResource Primario}" Click="ConfermaNome_Click" />
+                                    <Button Content="Lascia stare" MinWidth="0" Padding="11,4" Margin="6,0,0,0"
+                                            Style="{StaticResource Tenue}" Click="AnnullaNome_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <TextBlock Grid.Row="4" Text="PULSANTI" Style="{StaticResource Occhiello}"
+                                   Margin="2,0,0,7" />
+
+                        <!-- Il percorso: « Deck &#x203A; Musica &#x203A; ... ». Ogni pezzo
+                             riporta li' dov'e' scritto. -->
+                        <WrapPanel Grid.Row="5" x:Name="Briciole" Margin="0,0,0,7" />
+
+                        <Grid Grid.Row="6" Margin="0,0,0,8">
+                            <TextBox x:Name="CampoCerca" Padding="26,5,8,5"
+                                     TextChanged="Cerca_Changed"
+                                     ToolTip="Cerca fra tutti i pulsanti, dentro le cartelle comprese. Premendo un risultato ti porto dov'e'." />
+                            <TextBlock Text="&#x25CE;" Margin="9,0,0,0" FontSize="12"
+                                       VerticalAlignment="Center" IsHitTestVisible="False"
+                                       Foreground="{StaticResource TestoTenue}" />
+                            <TextBlock x:Name="SuggerimentoCerca" Text="Cerca un pulsante&#x2026;"
+                                       Margin="27,0,0,0" VerticalAlignment="Center"
+                                       IsHitTestVisible="False"
+                                       Foreground="{StaticResource TestoTenue}" />
+                        </Grid>
+
+                        <ListBox Grid.Row="7" x:Name="ElencoPulsanti" MinHeight="130"
+                                 SelectionChanged="ElencoPulsanti_SelectionChanged"
+                                 MouseDoubleClick="ElencoPulsanti_DoppioClic"
+                                 PreviewKeyDown="ElencoPulsanti_Tasto">
+                            <ListBox.ContextMenu>
+                                <ContextMenu x:Name="MenuPulsante" Opened="MenuPulsante_Opened">
+                                    <MenuItem Header="Apri la cartella" x:Name="VoceApri"
+                                              InputGestureText="Invio" Click="ApriCartella_Click" />
+                                    <MenuItem Header="Rinomina" InputGestureText="F2" Click="Rinomina_Click" />
+                                    <MenuItem Header="Prova sul PC" x:Name="VoceProva" Click="ProvaPulsante_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Duplica" InputGestureText="Ctrl+D" Click="DuplicaPulsante_Click" />
+                                    <MenuItem Header="Copia" InputGestureText="Ctrl+C" Click="Copia_Click" />
+                                    <MenuItem Header="Taglia" InputGestureText="Ctrl+X" Click="Taglia_Click" />
+                                    <MenuItem Header="Incolla qui" x:Name="VoceIncolla"
+                                              InputGestureText="Ctrl+V" Click="Incolla_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Sposta in" x:Name="VoceSposta" />
+                                    <MenuItem Header="Metti in una cartella nuova" Click="ImpacchettaInCartella_Click" />
+                                    <Separator />
+                                    <MenuItem Header="Togli" InputGestureText="Canc" Click="TogliPulsante_Click" />
+                                </ContextMenu>
+                            </ListBox.ContextMenu>
+                        </ListBox>
+
+                        <!-- Una barra sola, in tre gruppi: quel che si
+                             aggiunge, quel che si sposta, quel che si toglie.
+                             Erano sei pulsanti su due file, ognuno con la sua
+                             cornice, e sembravano sei cose senza parentela. -->
+                        <Border Grid.Row="8" Style="{StaticResource Barra}" Margin="0,12,0,0"
+                                HorizontalAlignment="Stretch">
+                            <WrapPanel>
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Pulsante"
+                                        Click="AggiungiPulsante_Click"
+                                        ToolTip="Un pulsante nuovo, in fondo a questa cartella." />
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Cartella"
+                                        Click="NuovaCartella_Click"
+                                        ToolTip="Una cartella: premendola, sul tablet si apre l'elenco che contiene." />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource Comando}" Content="&#x25B2;"
+                                        ToolTip="Spostalo indietro nella griglia" Click="SuPulsante_Click" />
+                                <Button Style="{StaticResource Comando}" Content="&#x25BC;"
+                                        ToolTip="Spostalo avanti nella griglia" Click="GiuPulsante_Click" />
+                                <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                        ToolTip="Togli il pulsante (Canc)" Click="TogliPulsante_Click" />
+                                <!-- Lo stesso menu del tasto destro, per chi il
+                                     tasto destro non lo prova. -->
+                                <Button Style="{StaticResource Comando}" Content="&#x22EF;"
+                                        ToolTip="Duplica, copia, sposta in una cartella, prova&#x2026;"
+                                        Click="AltriComandi_Click" />
+                            </WrapPanel>
+                        </Border>
+                    </Grid>
+
+                    <!-- che pulsante e' -->
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                                  Margin="0,0,4,0" Padding="0,0,8,10">
+                        <StackPanel x:Name="PannelloPulsante" IsEnabled="False"
+                                    MaxWidth="720" HorizontalAlignment="Stretch">
+
+                            <!-- Vuoto finche' la finestra e' larga: e' il posto
+                                 dove l'anteprima si trasferisce quando la sua
+                                 colonna non ci sta piu'. -->
+                            <ContentControl x:Name="OspiteAnteprimaSopra" Margin="0,0,0,14" />
+
+                            <GroupBox Header="COME APPARE SUL TABLET">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Etichetta" Style="{StaticResource Etichetta}" />
+                                        <TextBox Grid.Column="1" x:Name="CampoEtichetta"
+                                                 TextChanged="CampoPulsante_Changed" />
+                                    </Grid>
+
+                                    <!-- L'icona vince sul glifo: dove c'e' un'immagine, il
+                                         simbolo non viene disegnato. L'immagine scelta viene
+                                         copiata e ridotta in config/icone, quindi spostare o
+                                         cancellare l'originale non lascia il pulsante senza
+                                         faccia. -->
+                                    <!-- La barra sta sotto e non accanto: di
+                                         fianco al francobollo dell'icona le
+                                         restano due dita di colonna, e i suoi
+                                         tre comandi ci andavano a capo uno per
+                                         riga. -->
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Immagine"
+                                                   Style="{StaticResource Etichetta}" VerticalAlignment="Top"
+                                                   Margin="0,4,12,0" />
+                                        <Border Grid.Row="0" Grid.Column="1" Width="52" Height="52"
+                                                VerticalAlignment="Top"
+                                                Background="#111215" BorderBrush="{StaticResource Bordo}"
+                                                BorderThickness="1" CornerRadius="9">
+                                            <Grid>
+                                                <TextBlock x:Name="TestoNessunaIcona" Text="&#x2013;"
+                                                           HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                           Foreground="{StaticResource TestoTenue}" />
+                                                <Image x:Name="ImmagineIcona" Margin="5" Stretch="Uniform"
+                                                       RenderOptions.BitmapScalingMode="HighQuality" />
+                                            </Grid>
+                                        </Border>
+                                        <StackPanel Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                                    Margin="0,8,0,0">
+                                            <Border Style="{StaticResource Barra}">
+                                                <WrapPanel>
+                                                    <Button Style="{StaticResource Comando}" Content="Scegli&#x2026;"
+                                                            ToolTip="PNG, JPG, BMP, GIF o ICO: viene ridotta a 128 pixel e copiata in config/icone."
+                                                            Click="ScegliIcona_Click" />
+                                                    <Button x:Name="BtnIconaProgramma" Style="{StaticResource Comando}"
+                                                            Content="Dal programma"
+                                                            ToolTip="Prende l'icona dall'eseguibile scritto nell'azione &#xAB; Avvia un programma &#xBB;."
+                                                            Click="IconaDalProgramma_Click" />
+                                                    <Border Style="{StaticResource Divisore}" />
+                                                    <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                                            ToolTip="Togli l'immagine" Click="TogliIcona_Click" />
+                                                </WrapPanel>
+                                            </Border>
+                                            <TextBlock x:Name="TestoIcona" Style="{StaticResource Aiuto}"
+                                                       Margin="2,6,0,0" TextWrapping="Wrap" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid Margin="0,0,0,6">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Icona" Style="{StaticResource Etichetta}" />
+                                        <!-- Il nome dell'icona scelta: lo scrive la griglia
+                                             qui sotto, e i pulsanti di prima ci tengono il
+                                             loro glifo. -->
+                                        <TextBox Grid.Column="1" x:Name="CampoGlifo" Width="150"
+                                                 TextChanged="CampoPulsante_Changed" />
+                                    </Grid>
+
+                                    <!-- I glifi si scelgono premendoli: scriverne il codice a mano
+                                         era il modo piu' rapido per ottenere un quadratino vuoto. -->
+                                    <WrapPanel x:Name="PannelloGlifi" Margin="116,4,0,12" MaxWidth="440" HorizontalAlignment="Left" />
+
+                                    <Grid>
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="Auto" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Colore" Style="{StaticResource Etichetta}" />
+                                        <TextBox Grid.Column="1" x:Name="CampoColore" Width="104"
+                                                 FontFamily="Consolas" TextChanged="CampoPulsante_Changed" />
+                                        <Border Grid.Column="2" x:Name="AnteprimaColore" Width="30" Height="27"
+                                                Margin="8,0,0,0" BorderBrush="{StaticResource Bordo}"
+                                                BorderThickness="1" CornerRadius="8" />
+                                    </Grid>
+
+                                    <WrapPanel x:Name="PannelloColori" Margin="116,6,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox Header="COSA FA QUANDO LO PREMI">
+                                <StackPanel>
+                                    <Grid Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" Text="Azione" Style="{StaticResource Etichetta}" />
+                                        <ComboBox Grid.Column="1" x:Name="ElencoTipiAzione"
+                                                  HorizontalAlignment="Left" Width="240"
+                                                  SelectionChanged="TipoAzione_Changed" />
+                                    </Grid>
+
+                                    <Grid x:Name="RigaValore" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" x:Name="EtichettaValore" Text="Valore"
+                                                   Style="{StaticResource Etichetta}" />
+                                        <TextBox Grid.Column="1" x:Name="CampoValore"
+                                                 TextChanged="CampoPulsante_Changed" />
+                                        <!-- Dove i valori possibili sono pochi e noti — i tasti
+                                             multimediali, i pulsanti del mouse — si scelgono da un
+                                             elenco invece di scriverli: sbagliare una parola e
+                                             scoprirlo sul tablet non e' un rischio necessario. -->
+                                        <ComboBox Grid.Column="1" x:Name="ElencoScelte" Visibility="Collapsed"
+                                                  HorizontalAlignment="Left" Width="240"
+                                                  SelectionChanged="Scelte_Changed" />
+
+                                        <StackPanel Grid.Column="2" Orientation="Horizontal" Margin="8,0,0,0">
+                                            <ToggleButton x:Name="BtnCattura" Style="{StaticResource Gettone}"
+                                                          Width="86" Height="29" FontSize="12.5" Margin="0"
+                                                          Visibility="Collapsed" Content="Cattura"
+                                                          ToolTip="Premi la combinazione sulla tastiera: viene scritta qui."
+                                                          Checked="Cattura_Checked" Unchecked="Cattura_Unchecked" />
+                                            <Button x:Name="BtnSfoglia" Content="Sfoglia&#x2026;" MinWidth="0"
+                                                    Padding="11,5" Visibility="Collapsed"
+                                                    Style="{StaticResource Tenue}" Click="Sfoglia_Click" />
+                                        </StackPanel>
+                                    </Grid>
+
+                                    <Grid x:Name="RigaArgomenti" Margin="0,0,0,10">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="*" />
+                                        </Grid.ColumnDefinitions>
+                                        <TextBlock Grid.Column="0" x:Name="EtichettaArgomenti" Text="Argomenti"
+                                                   Style="{StaticResource Etichetta}" />
+                                        <TextBox Grid.Column="1" x:Name="CampoArgomenti"
+                                                 TextChanged="CampoPulsante_Changed" />
+                                        <!-- Scene e fonti di OBS: si scrivono o si prendono
+                                             dall'elenco, che OBS riempie quando lo si apre. -->
+                                        <ComboBox Grid.Column="1" x:Name="ElencoArgomenti" IsEditable="True"
+                                                  Visibility="Collapsed" HorizontalAlignment="Left" Width="280"
+                                                  TextBoxBase.TextChanged="ElencoArgomenti_Changed"
+                                                  DropDownOpened="ElencoArgomenti_Aperto" />
+                                    </Grid>
+
+                                    <TextBlock x:Name="AiutoAzione" Style="{StaticResource Aiuto}" Margin="116,0,0,0"
+                                               TextWrapping="Wrap" MaxWidth="480" HorizontalAlignment="Left" />
+
+                                    <local:PannelloStreaming x:Name="CollegamentoAzione" />
+
+                                    <!-- Quello che non va si dice qui, mentre lo si scrive: sul
+                                         tablet un'azione sbagliata non fa niente e non lo dice. -->
+                                    <StackPanel x:Name="RigaControllo" Orientation="Horizontal"
+                                                Margin="116,10,0,0" Visibility="Collapsed">
+                                        <TextBlock Text="&#x25CF;" x:Name="SegnoControllo" VerticalAlignment="Top"
+                                                   Foreground="{StaticResource Attenzione}" FontSize="10"
+                                                   Margin="0,3,7,0" />
+                                        <TextBlock x:Name="TestoControllo" TextWrapping="Wrap" MaxWidth="420"
+                                                   Foreground="{StaticResource Attenzione}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+
+                            <!-- cosa c'e' dentro, quando il pulsante e' una cartella -->
+                            <GroupBox x:Name="RiquadroCartella" Header="COSA C'E' DENTRO" Visibility="Collapsed">
+                                <StackPanel>
+                                    <TextBlock x:Name="TestoCartella" Style="{StaticResource Aiuto}"
+                                               TextWrapping="Wrap" MaxWidth="480" HorizontalAlignment="Left"
+                                               Margin="0,0,0,10" />
+                                    <WrapPanel>
+                                        <Button Content="Apri la cartella" MinWidth="0" Padding="12,5"
+                                                Margin="0,0,6,6" Click="ApriCartella_Click"
+                                                ToolTip="Entra: l'elenco a sinistra e l'anteprima passano al contenuto." />
+                                        <Button Content="&#x002B;  Pulsante dentro" MinWidth="0" Padding="12,5"
+                                                Margin="0,0,6,6" Style="{StaticResource Tenue}"
+                                                Click="AggiungiDentro_Click" />
+                                        <Button Content="&#x002B;  Cartella dentro" MinWidth="0" Padding="12,5"
+                                                Margin="0,0,6,6" Style="{StaticResource Tenue}"
+                                                Click="NuovaCartellaDentro_Click" />
+                                    </WrapPanel>
+                                    <ListBox x:Name="ElencoDentro" Height="140" Margin="0,10,0,0"
+                                             MouseDoubleClick="ElencoDentro_DoppioClic"
+                                             ToolTip="Un doppio clic apre la cartella e sceglie quel pulsante." />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <!-- ================ I PASSI DELLA SEQUENZA ================
+                                 Un pulsante che fa piu' cose: i passi vanno in
+                                 ordine, dall'alto in basso, e un passo puo'
+                                 essere a sua volta una sequenza — un gruppo con
+                                 le sue ripetizioni, « questi tre, cinque volte ».
+
+                                 I gruppi non si mostrano tutti aperti dentro
+                                 l'elenco: sarebbe un albero. Ci si entra come
+                                 nelle cartelle, e a dire dove si e' ci pensano
+                                 le briciole sopra l'elenco.
+                                 ======================================================== -->
+                            <GroupBox x:Name="RiquadroPassi" Header="PASSI DELLA SEQUENZA" Visibility="Collapsed">
+                                <StackPanel>
+                                    <!-- Registrare invece di scrivere: con il pulsante acceso,
+                                         ogni combinazione premuta sulla tastiera diventa un passo,
+                                         e le pause vere fra un tasto e l'altro diventano attese.
+                                         Una macro di dieci passi si monta facendola, che e' il
+                                         modo in cui uno la conosce gia'. -->
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <ToggleButton x:Name="BtnRegistra" Style="{StaticResource Gettone}"
+                                                      Width="122" Height="29" FontSize="12.5" Margin="0"
+                                                      Content="Registra i tasti"
+                                                      ToolTip="Premi qui, poi batti la macro sulla tastiera: ogni combinazione diventa un passo. Esc chiude."
+                                                      Checked="Registra_Checked" Unchecked="Registra_Unchecked" />
+                                        <TextBlock x:Name="TestoRegistra" VerticalAlignment="Center"
+                                                   Margin="12,0,0,0" Style="{StaticResource Aiuto}" />
+                                    </StackPanel>
+
+                                    <!-- « Passi › 2. 3 passi › … »: compaiono solo quando si e'
+                                         entrati in un gruppo, perche' alla radice direbbero
+                                         soltanto « sei dove sei ». -->
+                                    <WrapPanel x:Name="BricolePassi" Margin="0,0,0,6" />
+
+                                    <ListBox x:Name="ElencoPassi" MinHeight="118" MaxHeight="260"
+                                             Margin="0,0,0,8" SelectionMode="Extended"
+                                             ToolTip="Piu' passi si scelgono tenendo Ctrl o Maiusc: si spostano, si duplicano e si tolgono insieme."
+                                             SelectionChanged="ElencoPassi_SelectionChanged"
+                                             MouseDoubleClick="ElencoPassi_DoppioClic"
+                                             PreviewKeyDown="ElencoPassi_Tasto" />
+
+                                    <Border Style="{StaticResource Barra}" Margin="0,0,0,10"
+                                            HorizontalAlignment="Stretch">
+                                        <WrapPanel>
+                                            <Button x:Name="BtnAggiungiPasso" Style="{StaticResource Comando}"
+                                                    Content="&#x002B;  Passo" Click="AggiungiPasso_Click"
+                                                    ToolTip="Un passo nuovo, dopo quello scelto." />
+                                            <Button Style="{StaticResource Comando}" Content="&#x002B;  Gruppo"
+                                                    Click="AggiungiGruppo_Click"
+                                                    ToolTip="Una sequenza dentro la sequenza: ha ripetizioni sue." />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button x:Name="BtnApriPasso" Style="{StaticResource Comando}"
+                                                    Content="Apri" Click="ApriPasso_Click"
+                                                    ToolTip="Entra nel gruppo scelto (anche col doppio clic, o Invio)." />
+                                            <Button x:Name="BtnRaggruppa" Style="{StaticResource Comando}"
+                                                    Content="Raggruppa" Click="Raggruppa_Click"
+                                                    ToolTip="Mette i passi scelti dentro un gruppo nuovo, al loro posto." />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button x:Name="BtnDuplicaPasso" Style="{StaticResource Comando}"
+                                                    Content="Duplica" ToolTip="Ctrl+D" Click="DuplicaPasso_Click" />
+                                            <Button x:Name="BtnCopiaPasso" Style="{StaticResource Comando}"
+                                                    Content="Copia" Click="CopiaPasso_Click"
+                                                    ToolTip="Ctrl+C &#x2014; i passi copiati si incollano anche dentro un altro pulsante." />
+                                            <Button Style="{StaticResource Comando}" Content="Taglia"
+                                                    ToolTip="Ctrl+X" Click="TagliaPasso_Click" />
+                                            <Button x:Name="BtnIncollaPasso" Style="{StaticResource Comando}"
+                                                    Content="Incolla" ToolTip="Ctrl+V" Click="IncollaPasso_Click" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button x:Name="BtnSuPasso" Style="{StaticResource Comando}"
+                                                    Content="&#x25B2;" Click="SuPasso_Click"
+                                                    ToolTip="Su di un posto, tenendoli insieme" />
+                                            <Button x:Name="BtnGiuPasso" Style="{StaticResource Comando}"
+                                                    Content="&#x25BC;" Click="GiuPasso_Click"
+                                                    ToolTip="Giu' di un posto, tenendoli insieme" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button x:Name="BtnTogliPasso" Style="{StaticResource ComandoRischio}"
+                                                    Content="&#x2715;" Click="TogliPasso_Click"
+                                                    ToolTip="Togli i passi scelti (Canc)" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button x:Name="BtnProvaPasso" Style="{StaticResource Comando}"
+                                                    Content="Prova" Click="ProvaPasso_Click" />
+                                        </WrapPanel>
+                                    </Border>
+
+                                    <TextBlock x:Name="TestoPassiScelti" Margin="2,0,0,0"
+                                               Style="{StaticResource Aiuto}" />
+
+                                    <StackPanel Orientation="Horizontal" Margin="0,8,0,12">
+                                        <TextBlock Text="Ripeti" Style="{StaticResource Etichetta}" Width="116"
+                                                   Margin="0" VerticalAlignment="Center" />
+                                        <RepeatButton Content="&#x2013;" Style="{StaticResource RepeatTenue}"
+                                                      Click="RipetiGiu_Click" />
+                                        <TextBlock x:Name="TestoRipeti" Width="30" Style="{StaticResource Numero}"
+                                                   TextAlignment="Center" />
+                                        <RepeatButton Content="+" Style="{StaticResource RepeatTenue}"
+                                                      Click="RipetiSu_Click" />
+                                        <TextBlock x:Name="TestoDurata" VerticalAlignment="Center"
+                                                   Margin="16,0,0,0" Style="{StaticResource Aiuto}" />
+                                    </StackPanel>
+
+                                    <Grid x:Name="PannelloPasso" IsEnabled="False">
+                                        <Grid.ColumnDefinitions>
+                                            <ColumnDefinition Width="116" />
+                                            <ColumnDefinition Width="*" />
+                                            <ColumnDefinition Width="Auto" />
+                                        </Grid.ColumnDefinitions>
+                                        <Grid.RowDefinitions>
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                            <RowDefinition Height="Auto" />
+                                        </Grid.RowDefinitions>
+
+                                        <TextBlock Grid.Row="0" Grid.Column="0" Text="Fa'"
+                                                   Style="{StaticResource Etichetta}" Margin="0,0,12,8" />
+                                        <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2"
+                                                  x:Name="ElencoTipiPasso" HorizontalAlignment="Left" Width="240"
+                                                  Margin="0,0,0,8" SelectionChanged="TipoPasso_Changed" />
+
+                                        <TextBlock Grid.Row="1" Grid.Column="0" x:Name="EtichettaValorePasso"
+                                                   Text="Valore" Style="{StaticResource Etichetta}" Margin="0,0,12,8" />
+                                        <TextBox Grid.Row="1" Grid.Column="1" x:Name="CampoValorePasso"
+                                                 Margin="0,0,0,8" TextChanged="CampoPasso_Changed" />
+                                        <ComboBox Grid.Row="1" Grid.Column="1" x:Name="ElencoSceltePasso"
+                                                  Visibility="Collapsed" HorizontalAlignment="Left" Width="240"
+                                                  Margin="0,0,0,8" SelectionChanged="SceltePasso_Changed" />
+                                        <StackPanel Grid.Row="1" Grid.Column="2" Orientation="Horizontal"
+                                                    Margin="8,0,0,8">
+                                            <ToggleButton x:Name="BtnCatturaPasso" Style="{StaticResource Gettone}"
+                                                          Width="86" Height="29" FontSize="12.5" Margin="0"
+                                                          Visibility="Collapsed" Content="Cattura"
+                                                          ToolTip="Premi la combinazione sulla tastiera: viene scritta qui."
+                                                          Checked="CatturaPasso_Checked" Unchecked="CatturaPasso_Unchecked" />
+                                            <Button x:Name="BtnSfogliaPasso" Content="Sfoglia&#x2026;" MinWidth="0"
+                                                    Padding="11,5" Visibility="Collapsed"
+                                                    Style="{StaticResource Tenue}" Click="SfogliaPasso_Click" />
+                                        </StackPanel>
+
+                                        <TextBlock Grid.Row="2" Grid.Column="0" x:Name="EtichettaArgomentiPasso"
+                                                   Text="Argomenti" Style="{StaticResource Etichetta}" Margin="0,0,12,0" />
+                                        <TextBox Grid.Row="2" Grid.Column="1" x:Name="CampoArgomentiPasso"
+                                                 TextChanged="CampoPasso_Changed" />
+                                        <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ElencoArgomentiPasso"
+                                                  IsEditable="True" Visibility="Collapsed"
+                                                  HorizontalAlignment="Left" Width="280"
+                                                  TextBoxBase.TextChanged="ElencoArgomentiPasso_Changed"
+                                                  DropDownOpened="ElencoArgomenti_Aperto" />
+
+                                        <TextBlock Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2"
+                                                   x:Name="AiutoPasso" Style="{StaticResource Aiuto}"
+                                                   Margin="0,8,0,0" TextWrapping="Wrap" />
+                                    </Grid>
+
+                                    <local:PannelloStreaming x:Name="CollegamentoPasso" />
+                                </StackPanel>
+                            </GroupBox>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- come lo vedra' il tablet -->
+                    <ContentControl x:Name="OspiteAnteprimaLato" Grid.Row="1" Grid.Column="2"
+                                    Margin="10,0,0,0">
+                    <DockPanel x:Name="ColonnaAnteprima">
+                        <TextBlock DockPanel.Dock="Top" Text="COME LO VEDRAI SUL TABLET"
+                                   Style="{StaticResource Occhiello}" Margin="2,0,0,7" />
+
+                        <!-- I comandi del pulsante scelto, qui dove il pulsante
+                             si vede. Sono gli stessi dell'elenco a sinistra:
+                             mentre si guarda la griglia, andarli a cercare
+                             dall'altra parte della finestra e' un viaggio che
+                             non serve a niente. Passando sopra una cella
+                             compare anche il suo « togli », e il tasto destro
+                             apre il menu intero. -->
+                        <Border DockPanel.Dock="Top" Style="{StaticResource Barra}" Margin="0,0,0,10"
+                                HorizontalAlignment="Stretch">
+                            <WrapPanel>
+                                <Button Style="{StaticResource Comando}" Content="Rinomina"
+                                        ToolTip="F2" Click="Rinomina_Click" />
+                                <Button Style="{StaticResource Comando}" Content="Duplica"
+                                        ToolTip="Ctrl+D" Click="DuplicaPulsante_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <!-- I due Prova erano lo stesso comando scritto
+                                     due volte a mezzo metro di distanza: resta
+                                     questo, che sta accanto al pulsante che
+                                     prova. -->
+                                <Button x:Name="BtnProva" Style="{StaticResource Comando}" Content="Prova"
+                                        ToolTip="Esegue l'azione qui sul PC, come se l'avessi premuta sul tablet."
+                                        Click="ProvaPulsante_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                        ToolTip="Togli il pulsante (Canc)" Click="TogliPulsante_Click" />
+                                <Button Style="{StaticResource Comando}" Content="&#x22EF;"
+                                        ToolTip="Copia, taglia, metti in una cartella&#x2026;"
+                                        Click="AltriComandi_Click" />
+                            </WrapPanel>
+                        </Border>
+
+                        <!-- Ancorati in fondo, e in ordine dal basso: prima la
+                             griglia, sopra la riga di spiegazione, sopra ancora
+                             le pagine. Quel che avanza e' dell'anteprima, che e'
+                             la sola cosa di questa colonna che sappia crescere. -->
+                        <Border DockPanel.Dock="Bottom" Style="{StaticResource Riquadro}" Margin="0,12,0,0"
+                                Padding="12">
+                            <StackPanel>
+                                <TextBlock Text="GRIGLIA" Style="{StaticResource Occhiello}" Margin="0,0,0,10" />
+                                <!-- Una riga per misura, non due misure sulla
+                                     stessa riga: appaiate, in una colonna
+                                     stretta il « piu' » delle righe finiva a
+                                     capo da solo. -->
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                                    <TextBlock Text="Colonne" Style="{StaticResource Etichetta}"
+                                               Width="62" Margin="0" />
+                                    <RepeatButton Content="&#x2013;" Style="{StaticResource RepeatTenue}"
+                                                  Click="ColonneGiu_Click" />
+                                    <TextBlock x:Name="TestoColonne" Width="30" Style="{StaticResource Numero}"
+                                               TextAlignment="Center" />
+                                    <RepeatButton Content="+" Style="{StaticResource RepeatTenue}"
+                                                  Click="ColonneSu_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Righe" Style="{StaticResource Etichetta}"
+                                               Width="62" Margin="0" />
+                                    <RepeatButton Content="&#x2013;" Style="{StaticResource RepeatTenue}"
+                                                  Click="RigheGiu_Click" />
+                                    <TextBlock x:Name="TestoRighe" Width="30" Style="{StaticResource Numero}"
+                                               TextAlignment="Center" />
+                                    <RepeatButton Content="+" Style="{StaticResource RepeatTenue}"
+                                                  Click="RigheSu_Click" />
+                                </StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Sfondo" Style="{StaticResource Etichetta}"
+                                               Width="62" Margin="0" />
+                                    <Border Style="{StaticResource Barra}">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Button Style="{StaticResource Comando}" Content="Scegli&#x2026;"
+                                                    ToolTip="Un'immagine dietro i tasti, ritagliata a 1024 x 600"
+                                                    Click="ScegliSfondo_Click" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                                    ToolTip="Torna al fondo grafite" Click="TogliSfondo_Click" />
+                                        </StackPanel>
+                                    </Border>
+                                    <TextBlock x:Name="TestoSfondo" Margin="10,0,0,0" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TestoTenue}" />
+                                </StackPanel>
+                                <TextBlock x:Name="TestoCapienza" Style="{StaticResource Aiuto}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </Border>
+
+                        <!-- L'ordine si cambia dove l'ordine si vede. Le frecce
+                             dell'elenco a sinistra fanno la stessa cosa una cella
+                             per volta. -->
+
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,10,0,0">
+                            <Button Content="&#x25C0;" MinWidth="0" Padding="10,4" Style="{StaticResource Tenue}"
+                                    Click="PaginaGiu_Click" />
+                            <TextBlock x:Name="TestoPagina" VerticalAlignment="Center" Margin="10,0,10,0"
+                                       Foreground="{StaticResource TestoTenue}" Text="Pagina 1 di 1" />
+                            <Button Content="&#x25B6;" MinWidth="0" Padding="10,4" Style="{StaticResource Tenue}"
+                                    Click="PaginaSu_Click" />
+                        </StackPanel>
+
+                        <!-- Il riquadro sta stretto all'anteprima invece di
+                             tenersi tutta la colonna: quando in altezza non ci
+                             sta e la griglia si restringe, una cornice larga il
+                             doppio le farebbe da cuscino nero. -->
+                        <Border Style="{StaticResource Riquadro}" Padding="8" VerticalAlignment="Top"
+                                HorizontalAlignment="Left">
+                            <local:AnteprimaDeck x:Name="Anteprima" HorizontalAlignment="Left"
+                                                 VerticalAlignment="Top" />
+                        </Border>
+                    </DockPanel>
+                    </ContentControl>
+
+                    <!-- annulla, prova, salva -->
+                    <Grid Grid.Row="2" Grid.Column="0" Grid.ColumnSpan="3" Margin="0,14,0,0">
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Left">
+                            <!-- Una cartella tolta si porta via quel che aveva
+                                 dentro: senza un passo indietro, l'unico modo di
+                                 rimediare sarebbe chiudere senza salvare e
+                                 perdere anche tutto il resto. -->
+                            <Border Style="{StaticResource Barra}">
+                                <StackPanel Orientation="Horizontal">
+                                    <Button x:Name="BtnAnnulla" Style="{StaticResource Comando}"
+                                            Content="&#x21B6;  Annulla" IsEnabled="False"
+                                            ToolTip="Disfa l'ultima modifica al deck (Ctrl+Z)" Click="Annulla_Click" />
+                                    <Button x:Name="BtnRifai" Style="{StaticResource Comando}"
+                                            Content="&#x21B7;  Rifai" IsEnabled="False"
+                                            ToolTip="Rifa' quel che hai appena disfatto (Ctrl+Y)" Click="Rifai_Click" />
+                                </StackPanel>
+                            </Border>
+                            <!-- Quanti pulsanti esistono in tutto, non solo in
+                                 questa cartella: e' un numero che, una volta che
+                                 ci sono i piani, non si vede da nessun'altra
+                                 parte. -->
+                            <TextBlock x:Name="TestoTotale" VerticalAlignment="Center"
+                                       Margin="16,0,0,0" Style="{StaticResource Aiuto}" />
+                        </StackPanel>
+
+                        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right">
+                            <TextBlock x:Name="TestoDeckSalvato" VerticalAlignment="Center" Margin="0,0,16,0"
+                                       Foreground="{StaticResource TestoTenue}" />
+                            <!-- Collegarsi non manda piu' niente da solo: il
+                                 tablet il suo deck se lo tiene, e quello che
+                                 sta qui puo' essere un montaggio a meta'. Va
+                                 quando lo si chiede, ed e' questo il posto. -->
+                            <Button Content="Manda al tablet" MinWidth="0" Padding="14,5" Margin="0,0,8,0"
+                                    Click="MandaDeck_Click"
+                                    ToolTip="Manda al tablet il profilo di adesso. Il collegamento da solo non lo manda." />
+                            <Button Content="Salva e manda al tablet" MinWidth="184"
+                                    Style="{StaticResource Primario}" Click="SalvaDeck_Click" />
+                        </StackPanel>
+                    </Grid>
+                </Grid>
+            </TabItem>
+            <!-- ============================= LUCI =============================
+                 Il montaggio: quali lampade ci sono, come si chiamano, che
+                 chiave hanno, e quali routine mettere insieme. Premerle si preme
+                 in Uso &#x203A; Casa.
+                 ================================================================ -->
+            <TabItem Header="Luci" Tag="lightbulb">
+                <Grid Margin="{DynamicResource SpazioPagina}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition x:Name="LuciElenco" Width="264" />
+                        <ColumnDefinition Width="*" MinWidth="300" />
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Grid.Row="0" Grid.ColumnSpan="2" Margin="0,0,0,16">
+                        <TextBlock Text="Luci e routine" Style="{StaticResource TitoloPagina}" />
+                    </StackPanel>
+
+                    <!-- che cosa c'e' in casa -->
+                    <DockPanel Grid.Row="1" Grid.Column="0" Margin="0,0,16,0">
+                        <TextBlock DockPanel.Dock="Top" Text="LUCI E ROUTINE"
+                                   Style="{StaticResource Occhiello}" Margin="2,0,0,7" />
+                        <Border DockPanel.Dock="Bottom" Style="{StaticResource Barra}" Margin="0,12,0,0"
+                                HorizontalAlignment="Stretch">
+                            <WrapPanel>
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Scena"
+                                        ToolTip="Una scena nuova, con le luci com'e' adesso."
+                                        Click="CasaNuovaScena_Click" />
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Routine"
+                                        Click="CasaNuovaRoutine_Click" />
+                                <Button Style="{StaticResource Comando}" Content="Duplica"
+                                        ToolTip="Una copia della routine scelta, passi compresi."
+                                        Click="CasaDuplicaRoutine_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource Comando}" Content="&#x25B2;"
+                                        ToolTip="Sposta la routine su: e' l'ordine dei pulsanti sul tablet."
+                                        Click="CasaSuRoutine_Click" />
+                                <Button Style="{StaticResource Comando}" Content="&#x25BC;"
+                                        ToolTip="Sposta la routine giu'." Click="CasaGiuRoutine_Click" />
+                                <Button Style="{StaticResource Comando}" Content="Prova"
+                                        ToolTip="La esegue adesso dal PC, passo per passo, attese comprese."
+                                        Click="CasaProvaRoutine_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                        ToolTip="Togli la voce scelta" Click="CasaTogli_Click" />
+                            </WrapPanel>
+                        </Border>
+                        <ListBox x:Name="ElencoCasa" SelectionChanged="ElencoCasa_SelectionChanged" />
+                    </DockPanel>
+
+                    <!-- come si chiama e che faccia ha -->
+                    <ScrollViewer Grid.Row="1" Grid.Column="1" VerticalScrollBarVisibility="Auto"
+                                  Padding="0,0,10,0">
+                        <StackPanel x:Name="PannelloVoce" IsEnabled="False" MaxWidth="620"
+                                    HorizontalAlignment="Left">
+
+                            <GroupBox Header="COME APPARE SUL TABLET">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <TextBlock Text="Nome" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CampoNomeVoce" Width="240" VerticalAlignment="Center"
+                                                 TextChanged="CasaVoce_Changed" />
+                                    </StackPanel>
+                                    <StackPanel x:Name="RigaStanza" Orientation="Horizontal">
+                                        <TextBlock Text="Stanza" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CampoStanzaVoce" Width="240" VerticalAlignment="Center"
+                                                 TextChanged="CasaVoce_Changed" />
+                                    </StackPanel>
+                                    <WrapPanel x:Name="PannelloStanzeCasa" Margin="116,6,0,10" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Glifo" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Top" Margin="0,6,0,0" />
+                                        <TextBox x:Name="CampoGlifoVoce" Width="52" VerticalAlignment="Top"
+                                                 TextChanged="CasaVoce_Changed" />
+                                    </StackPanel>
+                                    <WrapPanel x:Name="PannelloGlifiCasa" Margin="116,6,0,10" />
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Colore" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Top" Margin="0,6,0,0" />
+                                        <TextBox x:Name="CampoColoreVoce" Width="96" VerticalAlignment="Top"
+                                                 TextChanged="CasaVoce_Changed" />
+                                    </StackPanel>
+                                    <WrapPanel x:Name="PannelloColoriCasa" Margin="116,6,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox x:Name="RiquadroLampada" Header="LA LAMPADA">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,8">
+                                        <TextBlock Text="Indirizzo" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CampoIpLuce" Width="150" VerticalAlignment="Center"
+                                                 TextChanged="CasaVoce_Changed" />
+                                        <TextBlock x:Name="TestoProtocollo" VerticalAlignment="Center"
+                                                   Margin="12,0,0,0" Foreground="{StaticResource TestoTenue}" />
+                                    </StackPanel>
+                                    <StackPanel Orientation="Horizontal">
+                                        <TextBlock Text="Chiave" Style="{StaticResource Etichetta}"
+                                                   Width="116" VerticalAlignment="Center" />
+                                        <TextBox x:Name="CampoChiaveLuce" Width="240" VerticalAlignment="Center"
+                                                 TextChanged="CasaVoce_Changed" />
+                                    </StackPanel>
+                                    <TextBlock x:Name="TestoChiaveLuce" Style="{StaticResource Aiuto}"
+                                               Margin="116,6,0,0" />
+                                </StackPanel>
+                            </GroupBox>
+
+                            <GroupBox x:Name="RiquadroPassiCasa" Header="PASSI DELLA ROUTINE" Visibility="Collapsed">
+                                <StackPanel>
+                                    <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                        <Button x:Name="PulsanteCattura" Content="Cattura com'e' adesso"
+                                                Style="{StaticResource Tenue}" MinWidth="0" Padding="14,5"
+                                                VerticalAlignment="Top" Click="CasaCattura_Click" />
+                                        <TextBlock x:Name="TestoCattura" Style="{StaticResource Aiuto}"
+                                                   VerticalAlignment="Center" Margin="12,0,0,0"
+                                                   TextWrapping="Wrap" MaxWidth="440" />
+                                    </StackPanel>
+                                    <Grid Height="132">
+                                        <ListBox x:Name="ElencoPassiLuce" SelectionChanged="ElencoPassiLuce_SelectionChanged" />
+                                        <TextBlock x:Name="TestoPassiVuoto" IsHitTestVisible="False"
+                                                   HorizontalAlignment="Center" VerticalAlignment="Center"
+                                                   Foreground="{StaticResource TestoTenue}"
+                                                   Text="Nessun passo: la routine non farebbe niente." />
+                                    </Grid>
+                                    <Border Style="{StaticResource Barra}" Margin="0,10,0,12">
+                                        <WrapPanel>
+                                            <Button Style="{StaticResource Comando}" Content="&#x002B;  Passo"
+                                                    Click="CasaAggiungiPasso_Click" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button Style="{StaticResource Comando}" Content="&#x25B2;"
+                                                    Click="CasaSuPasso_Click" />
+                                            <Button Style="{StaticResource Comando}" Content="&#x25BC;"
+                                                    Click="CasaGiuPasso_Click" />
+                                            <Border Style="{StaticResource Divisore}" />
+                                            <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                                    Click="CasaTogliPasso_Click" />
+                                        </WrapPanel>
+                                    </Border>
+                                    <StackPanel x:Name="PannelloPassoCasa" IsEnabled="False" Orientation="Horizontal">
+                                        <ComboBox x:Name="SceltaLucePasso" Width="160" VerticalAlignment="Center"
+                                                  SelectionChanged="CasaPasso_Changed" />
+                                        <ComboBox x:Name="SceltaAzionePasso" Width="128" Margin="8,0,0,0"
+                                                  VerticalAlignment="Center" SelectionChanged="CasaPasso_Changed" />
+                                        <TextBox x:Name="CampoValorePassoCasa" Width="90" Margin="8,0,0,0"
+                                                 VerticalAlignment="Center" TextChanged="CasaPasso_Changed" />
+                                        <TextBlock x:Name="TestoValorePasso" VerticalAlignment="Center"
+                                                   Margin="8,0,0,0" Foreground="{StaticResource TestoTenue}" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </GroupBox>
+
+                        </StackPanel>
+                    </ScrollViewer>
+
+                    <!-- in fondo: da dove arrivano le luci e dove vanno -->
+                    <Border Grid.Row="2" Grid.ColumnSpan="2" Margin="0,14,0,0" Padding="0,12,0,0"
+                            BorderThickness="0,1,0,0" BorderBrush="{StaticResource Bordo}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Cerca le lampade" Click="CasaCerca_Click" />
+                                <Button Content="Rileva chiavi" Margin="8,0,0,0" Click="CasaRileva_Click" />
+                                <Button Content="Manda al tablet" Margin="8,0,0,0"
+                                        Style="{StaticResource Primario}" Click="CasaManda_Click"
+                                        ToolTip="Allinea il tablet a quello che c'e' qui. Il collegamento da solo non lo fa." />
+                                <TextBlock x:Name="TestoLuciStato" VerticalAlignment="Center"
+                                           Margin="12,0,0,0" Foreground="{StaticResource TestoTenue}" />
+                                <TextBlock Text="Codice utente" Style="{StaticResource Etichetta}"
+                                           VerticalAlignment="Center" Margin="22,0,8,0" />
+                                <TextBox x:Name="CampoCodiceUtente" Width="180" VerticalAlignment="Center"
+                                         TextChanged="CasaAccount_Changed" />
+                                <TextBlock x:Name="TestoCasa" VerticalAlignment="Center" Margin="14,0,0,0"
+                                           TextTrimming="CharacterEllipsis"
+                                           Foreground="{StaticResource TestoTenue}" Text="" />
+                            </StackPanel>
+                            <Border x:Name="RiquadroQr" Visibility="Collapsed" Margin="0,12,0,0"
+                                    Background="White" Padding="14" HorizontalAlignment="Left"
+                                    CornerRadius="6">
+                                <StackPanel Orientation="Horizontal">
+                                    <Image x:Name="ImmagineQr" Width="200" Height="200"
+                                           RenderOptions.BitmapScalingMode="NearestNeighbor" />
+                                    <StackPanel Margin="18,0,4,0" VerticalAlignment="Center" MaxWidth="320">
+                                        <TextBlock Foreground="#111111" FontSize="13" TextWrapping="Wrap"
+                                                   Text="Apri Smart Life, tocca l'icona della scansione in alto a destra e inquadra questo codice. Poi conferma sul telefono." />
+                                        <TextBlock x:Name="TestoQrStato" Foreground="#555555" FontSize="12"
+                                                   Margin="0,10,0,0" TextWrapping="Wrap" Text="In attesa..." />
+                                        <Button Content="Annulla" HorizontalAlignment="Left" Margin="0,12,0,0"
+                                                Click="CasaAnnullaQr_Click" />
+                                    </StackPanel>
+                                </StackPanel>
+                            </Border>
+                        </StackPanel>
+                    </Border>
+                </Grid>
+            </TabItem>
+
+            <!-- ============================ SCHERMO ============================ -->
+            <TabItem Header="Schermo" Tag="monitor">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <StackPanel Margin="0,0,0,18">
+                            <TextBlock Text="Lo schermo" Style="{StaticResource TitoloPagina}" />
+                        </StackPanel>
+
+                        <!-- ================= CHE COSA MANDARE =================
+                             Prima non c'era scelta: al tablet andava sempre e
+                             solo lo schermo virtuale, e uno schermo vero non
+                             partiva nemmeno. Era una regola giusta contro un
+                             *ripiego* - vedersi la scrivania grande
+                             rimpicciolita su sette pollici perche' il driver
+                             non c'era - ma sbagliata come divieto: mandare un
+                             monitor vero, avendolo chiesto, e' un'altra cosa.
+                             Il ripiego silenzioso resta vietato: se quello
+                             scelto non c'e' piu', non parte niente e si dice
+                             perche'. -->
+                        <GroupBox Header="CHE COSA MANDARE AL TABLET">
+                            <StackPanel>
+                                <ComboBox x:Name="ElencoSorgenti" Margin="0,0,0,10"
+                                          SelectionChanged="Sorgente_Changed"
+                                          ToolTip="Quale immagine arriva al pannello. Lo schermo virtuale nasce quando serve; uno schermo vero dev'esserci gia'." />
+
+                                <TextBlock x:Name="TestoSorgente" Style="{StaticResource Aiuto}"
+                                           TextWrapping="Wrap" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="SCHERMO VIRTUALE">
+                            <StackPanel>
+
+                                <Border Style="{StaticResource Riquadro}" Background="{StaticResource Campo}"
+                                        Padding="12,10" Margin="0,0,0,12">
+                                    <TextBlock x:Name="TestoDriver" TextWrapping="Wrap"
+                                               Text="Nessun driver di schermo virtuale trovato." />
+                                </Border>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Cerca driver" Click="CercaDriver_Click" />
+                                    <Button x:Name="BtnAccendiSchermo" Content="Accendi" Margin="8,0,0,0"
+                                            IsEnabled="False" Click="AccendiSchermo_Click" />
+                                    <Button x:Name="BtnSpegniSchermo" Content="Spegni" Margin="8,0,0,0"
+                                            IsEnabled="False" Click="SpegniSchermo_Click" />
+                                </StackPanel>
+
+                                <TextBlock x:Name="TestoDriverAiuto" Style="{StaticResource Aiuto}"
+                                           Margin="0,12,0,0" Visibility="Collapsed"
+                                           Foreground="{StaticResource Attenzione}"
+                                           Text="Non ne hai uno installato. Serve Virtual Display Driver: pochi megabyte, e il suo catalogo e' firmato da SignPath Foundation con CA GlobalSign, quindi Windows lo accetta senza che tu debba approvare nessun certificato. Installalo, poi torna qui e premi Cerca driver." />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="RISOLUZIONE DELLO SCHERMO VIRTUALE">
+                            <StackPanel>
+                                <Border Style="{StaticResource Riquadro}" Background="{StaticResource Campo}"
+                                        Padding="12,10" Margin="0,0,0,12">
+                                    <TextBlock x:Name="TestoSchermi" TextWrapping="Wrap"
+                                               Text="Nessuno schermo virtuale acceso." />
+                                </Border>
+
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Aggiorna" Click="AggiornaSchermi_Click" />
+                                    <ComboBox x:Name="ElencoRisoluzioni" Width="150" Margin="10,0,0,0"
+                                              VerticalAlignment="Center" />
+                                    <Button Content="Applica" Margin="8,0,0,0" Click="ApplicaRisoluzione_Click" />
+                                    <Button Content="Porta a 1024x600" MinWidth="0" Margin="14,0,0,0"
+                                            Style="{StaticResource Tenue}"
+                                            ToolTip="I pixel del pannello: uno del PC su uno del tablet."
+                                            Click="RisoluzionePannello_Click" />
+                                </StackPanel>
+
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="IMMAGINE E TOCCO">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Frame al secondo"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <Slider Grid.Row="0" Grid.Column="1" x:Name="CursoreFps"
+                                        Minimum="5" Maximum="30" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        VerticalAlignment="Center" Margin="0,0,12,10" />
+                                <TextBlock Grid.Row="0" Grid.Column="2" x:Name="TestoFps" Width="30"
+                                           Style="{StaticResource Numero}" Margin="0,0,0,10" />
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Qualita' JPEG"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <Slider Grid.Row="1" Grid.Column="1" x:Name="CursoreQualita"
+                                        Minimum="35" Maximum="92" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        VerticalAlignment="Center" Margin="0,0,12,10" />
+                                <TextBlock Grid.Row="1" Grid.Column="2" x:Name="TestoQualita" Width="30"
+                                           Style="{StaticResource Numero}" Margin="0,0,0,10" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Gesti"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" Grid.ColumnSpan="2" x:Name="ElencoGesti"
+                                          HorizontalAlignment="Left" Width="360" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Il dito e' il contenuto: swipe scorre, tocco fa clic" />
+                                    <ComboBoxItem Content="Il dito e' il mouse: trascina col tasto sinistro" />
+                                </ComboBox>
+
+                                <CheckBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="SpuntaCursore"
+                                          Content="Disegna il puntatore del mouse dentro l'immagine" />
+
+                            </Grid>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ============================ TABLET ============================ -->
+            <TabItem Header="Tablet" Tag="tablet">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <StackPanel Margin="0,0,0,18">
+                            <TextBlock Text="Il tablet" Style="{StaticResource TitoloPagina}" />
+                        </StackPanel>
+
+                        <GroupBox Header="QUESTO TABLET">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock x:Name="TestoTabletStato" Style="{StaticResource Misura}" />
+                                    <TextBlock x:Name="TestoTabletDettaglio" Style="{StaticResource Aiuto}"
+                                               TextWrapping="Wrap" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button Content="Prepara un tablet" Style="{StaticResource Primario}"
+                                            Click="PreparaTablet_Click" />
+                                    <Button Content="Disinstalla" Style="{StaticResource Rischio}" Margin="8,0,0,0"
+                                            Click="DisinstallaTablet_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="SEZIONI NELLA BARRA">
+                            <StackPanel>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="116" />
+                                        <ColumnDefinition Width="*" />
+                                    </Grid.ColumnDefinitions>
+                                    <Grid.RowDefinitions>
+                                        <RowDefinition Height="Auto" />
+                                        <RowDefinition Height="Auto" />
+                                    </Grid.RowDefinitions>
+
+                                    <TextBlock Grid.Row="0" Text="Col PC" Style="{StaticResource Etichetta}" Margin="0,0,14,8" />
+                                    <WrapPanel Grid.Row="0" Grid.Column="1" Margin="0,0,0,6">
+                                        <CheckBox x:Name="SpuntaSezDashboard" Content="Dashboard" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSezDeck" Content="Deck" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSezSchermo" Content="Schermo remoto" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSezCasa" Content="Casa" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSezOrologio" Content="Timer e sveglie" Margin="0,0,0,8" />
+                                    </WrapPanel>
+
+                                    <TextBlock Grid.Row="1" Text="Senza PC" Style="{StaticResource Etichetta}" Margin="0,0,14,8" />
+                                    <WrapPanel Grid.Row="1" Grid.Column="1">
+                                        <CheckBox x:Name="SpuntaSenzaDashboard" Content="Dashboard" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSenzaDeck" Content="Deck" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSenzaCasa" Content="Casa" Margin="0,0,22,8" />
+                                        <CheckBox x:Name="SpuntaSenzaOrologio" Content="Timer e sveglie" Margin="0,0,0,8" />
+                                    </WrapPanel>
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="SCHERMO DEL TABLET">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Tieni acceso"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" Grid.ColumnSpan="2" x:Name="ElencoAcceso"
+                                          HorizontalAlignment="Left" Width="380" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Mai &#x2014; lascia fare al timeout di Android" />
+                                    <ComboBoxItem Content="Solo mentre guardo lo schermo remoto" />
+                                    <ComboBoxItem Content="Sempre &#x2014; il pannello non si spegne mai" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="1" Grid.Column="1" Grid.ColumnSpan="2"
+                                           Style="{StaticResource Aiuto}" Margin="0,0,0,14"
+                                           Text="Con &quot;Sempre&quot; serve l'alimentatore da 2 A." />
+
+                                <TextBlock Grid.Row="2" Grid.Column="0" Text="Luminosita'"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <Slider Grid.Row="2" Grid.Column="1" x:Name="CursoreLuce"
+                                        Minimum="5" Maximum="100" TickFrequency="1" IsSnapToTickEnabled="True"
+                                        VerticalAlignment="Center" Margin="0,0,12,10" />
+                                <TextBlock Grid.Row="2" Grid.Column="2" x:Name="TestoLuce" Width="42"
+                                           Style="{StaticResource Numero}" Margin="0,0,0,10" />
+
+                                <CheckBox Grid.Row="3" Grid.Column="1" Grid.ColumnSpan="2" x:Name="SpuntaLuceSistema"
+                                          Content="Usa la luminosita' impostata sul tablet" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="COMANDI">
+                            <StackPanel>
+                                <WrapPanel>
+                                    <Button x:Name="BtnTabletImpostazioni" Content="Impostazioni Android" Margin="0,0,8,8" Click="TabletImpostazioni_Click" />
+                                    <Button x:Name="BtnTabletWifi" Content="Impostazioni Wi-Fi" Margin="0,0,8,8" Click="TabletWifi_Click" />
+                                    <Button x:Name="BtnTabletRiavvia" Content="Riavvia TabDeck" Margin="0,0,0,8" Click="TabletRiavvia_Click" />
+                                </WrapPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- ========================= SALVASCHERMO ==========================
+                 Quando parte, come si vede, quali foto. L'anteprima e' lo
+                 stesso disegno del tablet, rimpicciolito: si sceglie guardando.
+                 Il resto sta in MainWindow.Salvaschermo.cs e Salvaschermo.cs.
+                 ================================================================= -->
+            <TabItem x:Name="SchedaSalvaschermo" Header="Salvaschermo" Tag="image">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Il salvaschermo" Style="{StaticResource TitoloPagina}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Provalo sul tablet" VerticalAlignment="Top"
+                                    Margin="16,0,0,0" Click="ProvaSalvaschermo_Click" />
+                        </Grid>
+
+                        <Border CornerRadius="10" BorderBrush="{StaticResource Bordo}" BorderThickness="1"
+                                MaxWidth="600" HorizontalAlignment="Left" Margin="0,0,0,14" ClipToBounds="True">
+                            <Viewbox Stretch="Uniform">
+                                <Grid Width="1024" Height="600" ClipToBounds="True" Background="#05070A">
+                                    <Grid x:Name="AnteprimaAurora">
+                                        <Ellipse Width="1130" Height="1130" Margin="-430,-560,0,0"
+                                                 HorizontalAlignment="Left" VerticalAlignment="Top">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#907C5CFF" Offset="0" />
+                                                    <GradientStop Color="#307C5CFF" Offset="0.45" />
+                                                    <GradientStop Color="#007C5CFF" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Ellipse Width="1130" Height="1130" Margin="0,-420,-520,0"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Top">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#9022D3EE" Offset="0" />
+                                                    <GradientStop Color="#3022D3EE" Offset="0.45" />
+                                                    <GradientStop Color="#0022D3EE" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Ellipse Width="1130" Height="1130" Margin="0,0,-300,-640"
+                                                 HorizontalAlignment="Right" VerticalAlignment="Bottom">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#90F472B6" Offset="0" />
+                                                    <GradientStop Color="#30F472B6" Offset="0.45" />
+                                                    <GradientStop Color="#00F472B6" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                        <Ellipse Width="1130" Height="1130" Margin="-620,0,0,-700"
+                                                 HorizontalAlignment="Left" VerticalAlignment="Bottom">
+                                            <Ellipse.Fill>
+                                                <RadialGradientBrush>
+                                                    <GradientStop Color="#9034D399" Offset="0" />
+                                                    <GradientStop Color="#3034D399" Offset="0.45" />
+                                                    <GradientStop Color="#0034D399" Offset="1" />
+                                                </RadialGradientBrush>
+                                            </Ellipse.Fill>
+                                        </Ellipse>
+                                    </Grid>
+                                    <Image x:Name="AnteprimaFoto" Stretch="UniformToFill" />
+                                    <Rectangle x:Name="AnteprimaScrim">
+                                        <Rectangle.Fill>
+                                            <LinearGradientBrush StartPoint="0,0.45" EndPoint="0,1">
+                                                <GradientStop Color="#00000000" Offset="0" />
+                                                <GradientStop Color="#A0000000" Offset="1" />
+                                            </LinearGradientBrush>
+                                        </Rectangle.Fill>
+                                    </Rectangle>
+                                    <Rectangle x:Name="AnteprimaVelo" Fill="Black" />
+                                    <StackPanel VerticalAlignment="Bottom" HorizontalAlignment="Left" Margin="48,0,48,44">
+                                        <StackPanel.Effect>
+                                            <DropShadowEffect BlurRadius="12" ShadowDepth="1.5" Opacity="0.5" Color="Black" />
+                                        </StackPanel.Effect>
+                                        <TextBlock x:Name="AnteprimaOra" FontFamily="Segoe UI Light" FontSize="132"
+                                                   Foreground="#F4F6FA" Margin="-6,0,0,-18" />
+                                        <TextBlock x:Name="AnteprimaData" FontFamily="Segoe UI" FontSize="28"
+                                                   Foreground="#EEF4F6FA" />
+                                        <TextBlock x:Name="AnteprimaDidascalia" FontFamily="Segoe UI" FontSize="16"
+                                                   Foreground="#99F4F6FA" Margin="0,12,0,0" MaxWidth="920"
+                                                   TextTrimming="CharacterEllipsis" />
+                                    </StackPanel>
+                                </Grid>
+                            </Viewbox>
+                        </Border>
+
+                        <GroupBox Header="QUANDO E COME">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Salvaschermo" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <CheckBox Grid.Row="0" Grid.Column="1" x:Name="SpuntaSalvaschermo" Content="Acceso" Margin="0,0,0,12" />
+
+                                <TextBlock Grid.Row="1" Text="Parte dopo" Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <ComboBox Grid.Row="1" Grid.Column="1" x:Name="ElencoDopo" Width="240"
+                                          HorizontalAlignment="Left" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="1 minuto senza tocchi" />
+                                    <ComboBoxItem Content="2 minuti senza tocchi" />
+                                    <ComboBoxItem Content="5 minuti senza tocchi" />
+                                    <ComboBoxItem Content="10 minuti senza tocchi" />
+                                    <ComboBoxItem Content="15 minuti senza tocchi" />
+                                    <ComboBoxItem Content="30 minuti senza tocchi" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="2" Text="Stile" Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <ComboBox Grid.Row="2" Grid.Column="1" x:Name="ElencoStile" Width="240"
+                                          HorizontalAlignment="Left" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Foto in movimento" />
+                                    <ComboBoxItem Content="Aurora" />
+                                    <ComboBoxItem Content="Solo l'ora" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="3" Text="Foto" Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <ComboBox Grid.Row="3" Grid.Column="1" x:Name="ElencoFonte" Width="240"
+                                          HorizontalAlignment="Left" Margin="0,0,0,10">
+                                    <ComboBoxItem Content="Immagine del giorno di Bing" />
+                                    <ComboBoxItem Content="La mia galleria" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="4" Text="Cambia foto" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <ComboBox Grid.Row="4" Grid.Column="1" x:Name="ElencoOgni" Width="240"
+                                          HorizontalAlignment="Left" Margin="0,0,0,12">
+                                    <ComboBoxItem Content="ogni 20 secondi" />
+                                    <ComboBoxItem Content="ogni minuto" />
+                                    <ComboBoxItem Content="ogni 2 minuti" />
+                                    <ComboBoxItem Content="ogni 5 minuti" />
+                                    <ComboBoxItem Content="ogni 15 minuti" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="5" Text="Mostra" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal" Margin="0,0,0,12">
+                                    <CheckBox x:Name="SpuntaSsOra" Content="L'ora" Margin="0,0,22,0" />
+                                    <CheckBox x:Name="SpuntaSsData" Content="La data" />
+                                </StackPanel>
+
+                                <TextBlock Grid.Row="6" Text="Attenuazione" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <Slider Grid.Row="6" Grid.Column="1" x:Name="CursoreVelo" Minimum="0" Maximum="80"
+                                        TickFrequency="5" IsSnapToTickEnabled="True" MaxWidth="320"
+                                        HorizontalAlignment="Stretch" VerticalAlignment="Center" Margin="0,0,12,12" />
+                                <TextBlock Grid.Row="6" Grid.Column="2" x:Name="TestoVelo" Width="42"
+                                           Style="{StaticResource Numero}" Margin="0,0,0,12" />
+
+                                <TextBlock Grid.Row="7" Text="Pannello" Style="{StaticResource Etichetta}" Margin="0,0,14,0" />
+                                <CheckBox Grid.Row="7" Grid.Column="1" Grid.ColumnSpan="2" x:Name="SpuntaSsPannello"
+                                          Content="Tieni acceso il pannello mentre scorre (col cavo del PC la batteria scende)" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="IMMAGINE DEL GIORNO DI BING">
+                            <StackPanel Orientation="Horizontal">
+                                <Button x:Name="PulsanteBing" Content="Aggiorna ora" Style="{StaticResource Tenue}"
+                                        MinWidth="0" Padding="14,5" Click="AggiornaBing_Click" />
+                                <TextBlock x:Name="TestoBing" Style="{StaticResource Aiuto}" VerticalAlignment="Center"
+                                           Margin="14,0,0,0" TextWrapping="Wrap" />
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="LA MIA GALLERIA">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,12">
+                                    <Button Content="Aggiungi immagini" Click="AggiungiFoto_Click" />
+                                    <TextBlock x:Name="TestoGalleria" Style="{StaticResource Aiuto}"
+                                               VerticalAlignment="Center" Margin="14,0,0,0" />
+                                </StackPanel>
+                                <WrapPanel x:Name="ElencoGalleria" />
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <TabItem Header="SISTEMA" Style="{StaticResource GruppoBarra}" />
+
+            <!-- ========================== ESTENSIONI ===========================
+                 Quello che TabDeck non fa di serie, installato da un file
+                 .tabdeck. Le voci le costruisce MainWindow.Estensioni.cs.
+                 ================================================================= -->
+            <TabItem x:Name="SchedaEstensioni" Header="Estensioni" Tag="puzzle">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <Grid Margin="0,0,0,18">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*" />
+                                <ColumnDefinition Width="Auto" />
+                            </Grid.ColumnDefinitions>
+                            <StackPanel>
+                                <TextBlock Text="Le estensioni" Style="{StaticResource TitoloPagina}" />
+                            </StackPanel>
+                            <Button Grid.Column="1" Content="Installa da file" VerticalAlignment="Top"
+                                    Margin="16,0,0,0" Click="InstallaEstensione_Click" />
+                        </Grid>
+
+                        <StackPanel x:Name="ElencoEstensioni" />
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- =========================== REGISTRO =========================== -->
+            <TabItem Header="Registro" Tag="scroll-text">
+                <Grid Margin="{DynamicResource SpazioPagina}">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto" />
+                        <RowDefinition Height="*" />
+                        <RowDefinition Height="Auto" />
+                    </Grid.RowDefinitions>
+
+                    <StackPanel Margin="0,0,0,16">
+                        <TextBlock Text="Il registro" Style="{StaticResource TitoloPagina}" />
+                    </StackPanel>
+
+                    <Border Grid.Row="1" Style="{StaticResource Riquadro}"
+                            Background="{StaticResource Campo}" Padding="4">
+                        <TextBox x:Name="CampoRegistro" IsReadOnly="True" Background="Transparent"
+                                 BorderThickness="0" FontFamily="Consolas" FontSize="12"
+                                 AcceptsReturn="True" Padding="10,8"
+                                 VerticalScrollBarVisibility="Auto" TextWrapping="NoWrap"
+                                 HorizontalScrollBarVisibility="Auto" />
+                    </Border>
+
+                    <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,12,0,0">
+                        <Button Content="Copia tutto" Click="CopiaRegistro_Click" />
+                        <Button Content="Svuota" Margin="8,0,0,0" Style="{StaticResource Tenue}"
+                                Click="SvuotaRegistro_Click" />
+                    </StackPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- ========================== IMPOSTAZIONI ==========================
+                 Come si apre TabDeck, quando avvisa, e come trova il tablet.
+                 Era la pagina Collegamento, e il collegamento a mano c'e'
+                 ancora, in fondo: sopra ci sono le cose che TabDeck puo' fare
+                 da solo. Ognuna e' una spunta, e di partenza sono spente — il
+                 programma resta a mano finche' non si sceglie altrimenti.
+                 ================================================================= -->
+            <TabItem x:Name="SchedaImpostazioni" Header="Impostazioni" Tag="settings">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <StackPanel Margin="0,0,0,18">
+                            <TextBlock Text="Impostazioni" Style="{StaticResource TitoloPagina}" />
+                        </StackPanel>
+
+                        <GroupBox Header="AVVIO">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Windows"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <CheckBox Grid.Row="0" Grid.Column="1" x:Name="SpuntaAccesso" Margin="0,0,0,10"
+                                          Content="Apri TabDeck quando accedo a Windows"
+                                          Click="SpuntaAccesso_Click" />
+
+                                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SpuntaNascosto" Margin="0,0,0,10"
+                                          Content="E resta accanto all'orologio, senza aprire la finestra" />
+
+                                <TextBlock Grid.Row="2" Grid.Column="1" x:Name="TestoAccesso"
+                                           Style="{StaticResource Aiuto}" TextWrapping="Wrap" />
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="COLLEGAMENTO AUTOMATICO">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="All'apertura"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ElencoApertura"
+                                          HorizontalAlignment="Left" Width="300" Margin="0,0,0,12">
+                                    <ComboBoxItem Content="Non collegare: lo faccio io" />
+                                    <ComboBoxItem Content="Collega col cavo" />
+                                    <ComboBoxItem Content="Collega in rete" />
+                                    <ComboBoxItem Content="Prima il cavo, poi la rete" />
+                                </ComboBox>
+
+                                <TextBlock Grid.Row="1" Grid.Column="0" Text="Da solo"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SpuntaCavo" Margin="0,0,0,10"
+                                          Content="Collega quando attacco il cavo" />
+
+                                <CheckBox Grid.Row="2" Grid.Column="1" x:Name="SpuntaRiprova" Margin="0,0,0,10"
+                                          Content="Se il collegamento cade o non riesce, riprova ogni 15 secondi" />
+
+                                <CheckBox Grid.Row="3" Grid.Column="1" x:Name="SpuntaChiamata" Margin="0,0,0,12"
+                                          Content="Collega quando il tablet preme &#xAB; Connetti al PC &#xBB;" />
+
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="NOTIFICHE DI WINDOWS">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Grid.Column="0" Text="Avvisami"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,10" />
+                                <CheckBox Grid.Row="0" Grid.Column="1" x:Name="SpuntaNotCollegato" Margin="0,0,0,10"
+                                          Content="Quando il tablet si collega" />
+                                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SpuntaNotCaduto" Margin="0,0,0,10"
+                                          Content="Quando il collegamento cade" />
+                                <CheckBox Grid.Row="2" Grid.Column="1" x:Name="SpuntaNotTentativi" Margin="0,0,0,14"
+                                          Content="Quando un collegamento automatico non riesce" />
+
+                                <TextBlock Grid.Row="3" Grid.Column="0" Text="Quando"
+                                           Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <CheckBox Grid.Row="3" Grid.Column="1" x:Name="SpuntaNotNascosta" Margin="0,0,0,12"
+                                          Content="Solo mentre la finestra e' nascosta o ridotta a icona" />
+
+                                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                                    <Button Content="Prova" MinWidth="0" Padding="14,5"
+                                            Style="{StaticResource Tenue}" Click="ProvaNotifica_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <GroupBox Header="CAVO USB">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Cerca tablet" Click="CercaUsb_Click" />
+                                    <TextBlock x:Name="TestoUsb" VerticalAlignment="Center" Margin="14,0,0,0"
+                                               Foreground="{StaticResource TestoTenue}" Text="Non ancora cercato." />
+                                </StackPanel>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="RETE WI-FI">
+                            <StackPanel>
+                                <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                    <TextBlock Text="Indirizzo" Style="{StaticResource Etichetta}" Margin="0,0,10,0" />
+                                    <TextBox x:Name="CampoIndirizzo" Width="190" VerticalAlignment="Center" />
+                                    <Button Content="Cerca in rete" Margin="8,0,0,0" Click="CercaWifi_Click" />
+                                </StackPanel>
+                                <Grid Height="96">
+                                    <ListBox x:Name="ElencoTrovati"
+                                             SelectionChanged="ElencoTrovati_SelectionChanged" />
+                                    <!-- Un riquadro vuoto non dice se la ricerca e' andata male
+                                         o se non e' mai partita. -->
+                                    <TextBlock x:Name="TestoTrovatiVuoto" IsHitTestVisible="False"
+                                               HorizontalAlignment="Center" VerticalAlignment="Center"
+                                               Foreground="{StaticResource TestoTenue}"
+                                               Text="Nessun tablet ancora cercato." />
+                                </Grid>
+                            </StackPanel>
+                        </GroupBox>
+
+                        <GroupBox Header="PORTA">
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="CampoPorta" Width="96" />
+                                <TextBlock Text="La stessa sui due lati. Cambiala solo se e' gia' occupata."
+                                           VerticalAlignment="Center" Margin="14,0,0,0"
+                                           Foreground="{StaticResource TestoTenue}" />
+                            </StackPanel>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </DockPanel>
+</Window>
