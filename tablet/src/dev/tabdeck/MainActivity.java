@@ -260,6 +260,19 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         link.setListener(this);
         link.start();
 
+        // Il secondo canale del cavo, per internet dal PC. Il consenso alla VPN lo
+        // mostra l'activity: il servizio non ha una finestra da cui chiederlo.
+        Tunnel.consenso = new Tunnel.Consenso() {
+            @Override public void chiedi(Intent richiesta) {
+                try {
+                    startActivityForResult(richiesta, RICHIESTA_VPN);
+                } catch (ActivityNotFoundException e) {
+                    Log.w(TAG, "consenso alla VPN non chiedibile: " + e.getMessage());
+                }
+            }
+        };
+        Tunnel.avvia(this);
+
         // Il filtro e' appiccicoso: la registrazione porta subito lo stato
         // attuale, senza aspettare il prossimo cambio di percentuale.
         registerReceiver(batteryWatcher, new IntentFilter(Intent.ACTION_BATTERY_CHANGED));
@@ -1561,6 +1574,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
                     // salva anche in locale, cosi' la pagina impostazioni del
                     // tablet mostra la stessa cosa.
                     salvaPreferenze(o.optString("keepAwake", "screen"), o.optInt("brightness", -1));
+                    Web.modo = o.optString("internet", "no");
                     JSONObject sez = o.optJSONObject("sezioni");
                     if (sez != null) sezioniDalPc(sez);
                     break;
@@ -1610,6 +1624,14 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
         if (hasFocus) getWindow().getDecorView().setSystemUiVisibility(UI_FLAGS);
+    }
+
+    private static final int RICHIESTA_VPN = 41;
+
+    @Override
+    protected void onActivityResult(int richiesta, int esito, Intent dati) {
+        super.onActivityResult(richiesta, esito, dati);
+        if (richiesta == RICHIESTA_VPN && esito == RESULT_OK) Tunnel.consensoDato();
     }
 
     @Override
@@ -1712,6 +1734,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
     @Override
     protected void onDestroy() {
         super.onDestroy();
+        Tunnel.consenso = null;
         // Prima si stacca l'ascoltatore, poi si liberano i bitmap: invertendo
         // l'ordine il thread di rete potrebbe disegnare su una bitmap gia'
         // riciclata. Il link resta vivo per la prossima activity.

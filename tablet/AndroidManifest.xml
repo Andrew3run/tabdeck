@@ -69,6 +69,17 @@
             </intent-filter>
         </activity>
 
+        <!-- « Internet col cavo: tutto il tablet ». Una VPN locale che porta il traffico
+             al PC sul cavo; il permesso BIND_VPN_SERVICE lo tiene in mano ad Android,
+             e al primo avvio il tablet chiede il consenso. Vedi Tunnel.java. -->
+        <service
+            android:name="dev.tabdeck.Tunnel"
+            android:permission="android.permission.BIND_VPN_SERVICE">
+            <intent-filter>
+                <action android:name="android.net.VpnService" />
+            </intent-filter>
+        </service>
+
         <!-- Dove Android consegna il timer e la sveglia. Non esportato: le
              sveglie se le manda l'app da sola, nessun altro deve poter far
              suonare questo tablet. -->

@@ -104,6 +104,7 @@ public sealed class Engine : IDisposable
         link.OnPlugin += (tipo, dati, lunghezza) => FramePlugin?.Invoke(tipo, dati, lunghezza);
         link.OnSalvaschermo += json => FrameSalvaschermo?.Invoke(json);
         link.OnConfig += json => ConfigDalTablet?.Invoke(json);
+        link.OnWeb += PaginaPerIlTablet;
     }
 
     // ---- plugin ----
@@ -687,6 +688,7 @@ public sealed class Engine : IDisposable
         link.SendJson(Proto.Config, ConfigFile.Wire(new
         {
             keepAwake = settings.Tablet.KeepAwake,
+            internet = settings.Tablet.Internet,
             brightness = settings.Tablet.Brightness,
             // Due scelte: il tablet usa quella del momento, e passa all'altra da solo
             // quando si collega o si stacca.
@@ -697,7 +699,7 @@ public sealed class Engine : IDisposable
                     dashboard = settings.Tablet.Sezioni.Dashboard,
                     deck = settings.Tablet.Sezioni.Deck,
                     schermo = settings.Tablet.Sezioni.Schermo,
-                    casa = settings.Tablet.Sezioni.Casa,
+                    casa = settings.Tablet.Sezioni.Casa && !LuciSpente,
                     orologio = settings.Tablet.Sezioni.Orologio,
                 },
                 scollegato = new
@@ -705,7 +707,7 @@ public sealed class Engine : IDisposable
                     dashboard = settings.Tablet.SenzaPc.Dashboard,
                     deck = settings.Tablet.SenzaPc.Deck,
                     schermo = false,
-                    casa = settings.Tablet.SenzaPc.Casa,
+                    casa = settings.Tablet.SenzaPc.Casa && !LuciSpente,
                     orologio = settings.Tablet.SenzaPc.Orologio,
                 },
                 cambiate = settings.Tablet.Sezioni.Cambiate,
@@ -841,9 +843,11 @@ public sealed class Engine : IDisposable
     public bool SendLuci()
     {
         if (!link.IsConnected) return false;
+        // Una postazione senza luci manda l'elenco vuoto: il tablet tiene solo quel che riceve.
+        var tutte = LuciSpente ? new LuciConfig() : luci;
         link.SendJson(Proto.Luci, ConfigFile.Wire(new
         {
-            luci = luci.Luci.Where(l => l.Completa).Select(l => new
+            luci = tutte.Luci.Where(l => l.Completa).Select(l => new
             {
                 nome = l.Nome,
                 id = l.Id,
@@ -854,7 +858,7 @@ public sealed class Engine : IDisposable
                 colore = l.Colore,
                 stanza = l.Stanza,
             }).ToList(),
-            routine = luci.Routine.Where(r => r.Passi.Count > 0).Select(r => new
+            routine = tutte.Routine.Where(r => r.Passi.Count > 0).Select(r => new
             {
                 nome = r.Nome,
                 glifo = r.Glifo,
@@ -870,6 +874,44 @@ public sealed class Engine : IDisposable
         }));
         return true;
     }
+
+    // ---- internet per il tablet ----
+
+    private static readonly System.Net.Http.HttpClient web = new() { Timeout = TimeSpan.FromSeconds(12) };
+
+    /// <summary>
+    /// « Internet col cavo: solo TabDeck ». Il tablet chiede una pagina (il meteo) e il PC
+    /// la scarica e gliela rimanda. Solo http e https, solo GET, e solo con quella scelta:
+    /// il tablet non diventa un modo di far scaricare al PC quel che si vuole.
+    /// </summary>
+    private async void PaginaPerIlTablet(string json)
+    {
+        int id = 0;
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(json);
+            id = doc.RootElement.GetProperty("id").GetInt32();
+            string url = doc.RootElement.GetProperty("url").GetString() ?? "";
+            if (settings.Tablet.Internet == "no") throw new InvalidOperationException("internet col cavo spento");
+            if (!Uri.TryCreate(url, UriKind.Absolute, out var indirizzo) || indirizzo.Scheme is not ("http" or "https"))
+                throw new InvalidOperationException("indirizzo non valido");
+
+            using var richiesta = new System.Net.Http.HttpRequestMessage(System.Net.Http.HttpMethod.Get, indirizzo);
+            richiesta.Headers.UserAgent.ParseAdd("TabDeck");
+            using var risposta = await web.SendAsync(richiesta);
+            risposta.EnsureSuccessStatusCode();
+            string testo = await risposta.Content.ReadAsStringAsync();
+            if (testo.Length > 1_000_000) throw new InvalidOperationException("pagina troppo grande");
+            link.SendJson(Proto.WebRisposta, ConfigFile.Wire(new { id, testo }));
+        }
+        catch (Exception e)
+        {
+            if (link.IsConnected) link.SendJson(Proto.WebRisposta, ConfigFile.Wire(new { id, errore = e.Message }));
+        }
+    }
+
+    /// <summary>Vero in una postazione senza luci di casa. Vedi <see cref="Postazione.Luci"/>.</summary>
+    public bool LuciSpente { get; set; }
 
     /// <summary>Come <see cref="UseDeck"/>: si ricorda, non si manda.</summary>
     public void UseLuci(LuciConfig fresh) => luci = fresh;

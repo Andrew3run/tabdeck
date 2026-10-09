@@ -55,6 +55,15 @@
                 </StackPanel>
 
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
+                    <!-- La postazione: Casa, Ufficio. Vedi MainWindow.Postazioni.cs. -->
+                    <Viewbox Width="15" Height="15" Margin="0,0,8,0" VerticalAlignment="Center">
+                        <Path Width="24" Height="24" Data="{Binding Source=map-pin, Converter={StaticResource FormaIcona}}"
+                              Stroke="{StaticResource TestoTenue}" StrokeThickness="2" StrokeLineJoin="Round"
+                              StrokeStartLineCap="Round" StrokeEndLineCap="Round" />
+                    </Viewbox>
+                    <ComboBox x:Name="ElencoPostazioni" Width="190" Margin="0,0,14,0"
+                              VerticalAlignment="Center" ToolTip="Postazione"
+                              SelectionChanged="Postazione_Changed" />
                     <TextBlock x:Name="TestoBanda" Margin="0,0,14,0" VerticalAlignment="Center"
                                FontFamily="Consolas" Foreground="{StaticResource TestoTenue}" />
                     <Button x:Name="BtnStato" Style="{StaticResource Tenue}" Padding="13,6"
@@ -143,6 +152,19 @@
                                 <TextBlock x:Name="DashboardDettaglio" Style="{StaticResource Aiuto}"
                                            Margin="0,6,0,0" MaxWidth="560" HorizontalAlignment="Left"
                                            Text="Attacca il cavo e premi « Collega col cavo », oppure accendi il tablet sulla rete di casa e premi « Collega in rete »: l'indirizzo lo trova da solo." />
+
+                                <!-- L'app del tablet e' diversa da TabDeck.apk. Vedi MainWindow.AppTablet.cs. -->
+                                <Border x:Name="RigaAppDashboard" Visibility="Collapsed" Style="{StaticResource Riquadro}"
+                                        Padding="12,8" Margin="0,14,0,0" HorizontalAlignment="Left">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Ellipse Width="7" Height="7" VerticalAlignment="Center"
+                                                 Fill="{StaticResource Attenzione}" />
+                                        <TextBlock Text="App del tablet da aggiornare" Margin="10,0,16,0"
+                                                   VerticalAlignment="Center" Foreground="{StaticResource TestoForte}" />
+                                        <Button x:Name="BtnAggiornaAppDashboard" Content="Aggiorna" MinWidth="0" Padding="14,4"
+                                                Style="{StaticResource Primario}" Click="AggiornaApp_Click" />
+                                    </StackPanel>
+                                </Border>
 
                                 <WrapPanel Margin="0,16,0,0">
                                     <Button x:Name="BtnUsb" Content="Collega col cavo" MinWidth="150"
@@ -336,7 +358,7 @@
                  Il pannello vero delle lampade. Non c'e' niente da configurare:
                  si preme e la luce cambia.
                  ================================================================ -->
-            <TabItem Header="Casa" Tag="house">
+            <TabItem x:Name="SchedaCasa" Header="Casa" Tag="house">
                 <DockPanel Margin="{DynamicResource SpazioPagina}">
                     <StackPanel DockPanel.Dock="Top" Margin="0,0,0,16">
                         <TextBlock Text="Casa" Style="{StaticResource TitoloPagina}" />
@@ -355,6 +377,93 @@
             </TabItem>
 
             <TabItem Header="GESTIONE" Style="{StaticResource GruppoBarra}" />
+
+            <!-- =========================== POSTAZIONI ===========================
+                 Casa, Ufficio. Una postazione si ricorda profilo del deck,
+                 indirizzo in rete, collegamento all'apertura, sezioni e schermo
+                 del tablet: quel che si sceglie nelle altre pagine resta a
+                 quella attiva. Vedi MainWindow.Postazioni.cs.
+                 ================================================================= -->
+            <TabItem x:Name="SchedaPostazioni" Header="Postazioni" Tag="map-pin">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
+
+                        <StackPanel Margin="0,0,0,18">
+                            <TextBlock Text="Postazioni" Style="{StaticResource TitoloPagina}" />
+                        </StackPanel>
+
+                        <ListBox x:Name="ListaPostazioni" MinWidth="520" Margin="0,0,0,12"
+                                 SelectionChanged="ListaPostazioni_Changed" />
+
+                        <Border Style="{StaticResource Barra}" HorizontalAlignment="Left">
+                            <WrapPanel>
+                                <Button x:Name="BtnUsaPostazione" Style="{StaticResource Comando}" Content="Passa qui"
+                                        Click="UsaPostazione_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource Comando}" Content="&#x002B;  Nuova"
+                                        Click="NuovaPostazione_Click" />
+                                <Button Style="{StaticResource Comando}" Content="Rinomina"
+                                        Click="RinominaPostazione_Click" />
+                                <Border Style="{StaticResource Divisore}" />
+                                <Button Style="{StaticResource ComandoRischio}" Content="&#x2715;"
+                                        Click="TogliPostazione_Click" />
+                            </WrapPanel>
+                        </Border>
+
+                        <Border x:Name="RigaNomePostazione" Visibility="Collapsed" HorizontalAlignment="Left"
+                                Style="{StaticResource Riquadro}" Padding="10" Margin="0,12,0,0" Width="360">
+                            <StackPanel>
+                                <TextBlock x:Name="TestoNomePostazione" Style="{StaticResource Aiuto}" Margin="0,0,0,7" />
+                                <TextBox x:Name="CampoNomePostazione" Margin="0,0,0,8"
+                                         KeyDown="CampoNomePostazione_Tasto" />
+                                <StackPanel Orientation="Horizontal">
+                                    <Button Content="Va bene" MinWidth="0" Padding="11,4"
+                                            Style="{StaticResource Primario}" Click="ConfermaNomePostazione_Click" />
+                                    <Button Content="Lascia stare" MinWidth="0" Padding="11,4" Margin="6,0,0,0"
+                                            Style="{StaticResource Tenue}" Click="AnnullaNomePostazione_Click" />
+                                </StackPanel>
+                            </StackPanel>
+                        </Border>
+
+                        <!-- Cosa c'e' nella postazione scelta nell'elenco. Su quella attiva
+                             vale subito; sulle altre vale quando ci si passa. -->
+                        <GroupBox x:Name="GruppoPostazione" Margin="0,22,0,0">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+
+                                <TextBlock Grid.Row="0" Text="Deck" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ElencoPostProfilo" Width="240"
+                                          HorizontalAlignment="Left" Margin="0,0,0,12"
+                                          SelectionChanged="PostProfilo_Changed" />
+
+                                <TextBlock Grid.Row="1" Text="Casa" Style="{StaticResource Etichetta}" Margin="0,0,14,12" />
+                                <CheckBox Grid.Row="1" Grid.Column="1" x:Name="SpuntaPostLuci" Content="Luci di casa"
+                                          Margin="0,0,0,12" Click="PostLuci_Click" />
+
+                                <TextBlock Grid.Row="2" Text="Col PC" Style="{StaticResource Etichetta}" Margin="0,0,14,8" />
+                                <WrapPanel Grid.Row="2" Grid.Column="1" x:Name="PostSezioni" Margin="0,0,0,4" />
+
+                                <TextBlock Grid.Row="3" Text="Senza PC" Style="{StaticResource Etichetta}" Margin="0,0,14,8" />
+                                <WrapPanel Grid.Row="3" Grid.Column="1" x:Name="PostSenzaPc" Margin="0,0,0,4" />
+
+                                <TextBlock Grid.Row="4" Text="Estensioni" Style="{StaticResource Etichetta}" Margin="0,4,14,0" />
+                                <WrapPanel Grid.Row="4" Grid.Column="1" x:Name="PostEstensioni" Margin="0,4,0,0" />
+                            </Grid>
+                        </GroupBox>
+
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
 
             <!-- ============================= DECK =============================
 
@@ -1425,7 +1534,7 @@
             </TabItem>
 
             <!-- ============================ TABLET ============================ -->
-            <TabItem Header="Tablet" Tag="tablet">
+            <TabItem x:Name="SchedaTablet" Header="Tablet" Tag="tablet">
                 <ScrollViewer VerticalScrollBarVisibility="Auto">
                     <StackPanel Margin="{DynamicResource SpazioPagina}" MaxWidth="900" HorizontalAlignment="Left">
 
@@ -1450,6 +1559,49 @@
                                     <Button Content="Disinstalla" Style="{StaticResource Rischio}" Margin="8,0,0,0"
                                             Click="DisinstallaTablet_Click" />
                                 </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Vedi MainWindow.AppTablet.cs. -->
+                        <GroupBox Header="APP SUL TABLET">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="Auto" />
+                                </Grid.ColumnDefinitions>
+                                <StackPanel VerticalAlignment="Center" Margin="0,0,16,0">
+                                    <TextBlock x:Name="TestoAppStato" Style="{StaticResource Misura}" Text="Non controllata" />
+                                    <TextBlock x:Name="TestoAppDettaglio" Style="{StaticResource Aiuto}"
+                                               TextWrapping="Wrap" Margin="0,3,0,0" />
+                                </StackPanel>
+                                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                                    <Button x:Name="BtnAggiornaApp" Content="Aggiorna" Style="{StaticResource Primario}"
+                                            IsEnabled="False" Click="AggiornaApp_Click" />
+                                    <Button x:Name="BtnControllaApp" Content="Controlla" Style="{StaticResource Tenue}"
+                                            Margin="8,0,0,0" Click="ControllaApp_Click" />
+                                </StackPanel>
+                            </Grid>
+                        </GroupBox>
+
+                        <!-- Vedi MainWindow.Internet.cs. -->
+                        <GroupBox Header="INTERNET COL CAVO">
+                            <Grid>
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="116" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <Grid.RowDefinitions>
+                                    <RowDefinition Height="Auto" />
+                                    <RowDefinition Height="Auto" />
+                                </Grid.RowDefinitions>
+                                <TextBlock Grid.Row="0" Text="Dal PC" Style="{StaticResource Etichetta}" Margin="0,0,14,0" />
+                                <ComboBox Grid.Row="0" Grid.Column="1" x:Name="ElencoInternet" Width="300" HorizontalAlignment="Left">
+                                    <ComboBoxItem Content="Niente" />
+                                    <ComboBoxItem Content="Solo TabDeck (meteo)" />
+                                    <ComboBoxItem Content="Tutto il tablet" />
+                                </ComboBox>
+                                <TextBlock Grid.Row="1" Grid.Column="1" x:Name="TestoInternet" Style="{StaticResource Aiuto}"
+                                           TextWrapping="Wrap" Margin="0,8,0,0" Visibility="Collapsed" />
                             </Grid>
                         </GroupBox>
 

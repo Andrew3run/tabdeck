@@ -448,7 +448,9 @@ public partial class MainWindow
         CaricaDeck();
         RiempiProfili();
         SalvaDeck();
-        Registra($"Profilo « {altro.Nome} »: {deck.Buttons.Count} pulsanti in cima, "
+        // Il profilo e' una delle cose che la postazione si ricorda.
+        ScriviImpostazioni();
+        Registra($"Profilo « {altro.Nome} »:{deck.Buttons.Count} pulsanti in cima, "
                  + $"griglia {deck.Cols} × {deck.Rows}.");
     }
 
@@ -551,6 +553,7 @@ public partial class MainWindow
                 deckFile.Attivo = nome;
                 RiempiProfili();
                 SalvaDeck();
+                ProfiloRinominato(prima, nome);
                 Registra($"« {prima} » adesso si chiama « {nome} ».");
                 // I pulsanti che ci portavano nominano il nome vecchio: e' una
                 // cosa che si scopre premendoli, quindi si dice adesso.

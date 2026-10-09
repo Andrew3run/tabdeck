@@ -651,7 +651,7 @@ public partial class MainWindow
         // un genitore solo, non perche' le due file siano cose diverse.
         RoutineVive.Children.Clear();
         RiquadroRoutineVive.Visibility =
-            luci.Routine.Count > 0 ? Visibility.Visible : Visibility.Collapsed;
+            luci.Routine.Count > 0 && !engine.LuciSpente ? Visibility.Visible : Visibility.Collapsed;
 
         // Comparendo o sparendo cambia la forma della dashboard: senza routine
         // il deck si prende anche la sua colonna.

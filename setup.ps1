@@ -162,7 +162,7 @@ function Invoke-Check {
         return
     }
 
-    # 18765 e non 8765: la 8765 del PC e' del canale locale di AiWork OS.
+    # 18765 e non 8765: la 8765 del PC e' gia' occupata da un altro programma.
     & $adb -s $serial forward tcp:18765 localabstract:tabdeck | Out-Null
     if ($LASTEXITCODE) { Write-Host "[5] adb forward              NO" -ForegroundColor Red; return }
     Write-Host "[5] adb forward              si" -ForegroundColor Green

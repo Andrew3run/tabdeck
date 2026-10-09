@@ -3,7 +3,7 @@ package dev.tabdeck;
 import android.graphics.Path;
 
 /**
- * I tracciati delle icone Lucide (ISC), gli stessi che AiWork OS usa sul PC.
+ * I tracciati delle icone Lucide (ISC), gli stessi che TabDeck usa sul PC.
  *
  * Il tablet e l'app che comanda parlano cosi' la stessa lingua per immagini: la
  * griglia, il monitor, la casa sono le stesse figure da una parte e dall'altra.

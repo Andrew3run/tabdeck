@@ -107,6 +107,10 @@ public partial class MainWindow : Window
         PreparaEstensioni();
         PreparaArrivi();
         PreparaAggiornamento();
+        PreparaPostazioni();
+        PreparaInternet();
+        MostraAppTablet();
+        Schede.SelectionChanged += SchedaTablet_Aperta;
 
         Registra($"Configurazione in {configDir}");
         Closing += Chiusura;
@@ -353,10 +357,14 @@ public partial class MainWindow : Window
         {
             FermaAttesa();
             Notifica(settings.Comportamento.NotificaCollegato, "Tablet collegato", dice);
+            AggiornaInternet();
+            // Col cavo l'app del tablet si puo' confrontare con TabDeck.apk: solo lettura.
+            if (engine.Transport.Equals("usb", StringComparison.OrdinalIgnoreCase)) ControllaAppTablet();
         }
         else
         {
             AggiornaAttesa();
+            AggiornaInternet();
         }
 
         if (!connected)
@@ -498,38 +506,9 @@ public partial class MainWindow : Window
 
     private void CaricaImpostazioni()
     {
+        MostraImpostazioni();
         caricamento = true;
 
-        CampoIndirizzo.Text = settings.Host;
-        CampoPorta.Text = settings.Port.ToString();
-
-        CursoreFps.Value = settings.Fps;
-        CursoreQualita.Value = settings.Quality;
-        SpuntaCursore.IsChecked = settings.DrawCursor;
-        ElencoGesti.SelectedIndex = settings.Touch.Mode.Equals("pointer", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
-
-        ElencoAcceso.SelectedIndex = settings.Tablet.KeepAwake switch
-        {
-            "never" => 0,
-            "always" => 2,
-            _ => 1,
-        };
-        SpuntaLuceSistema.IsChecked = settings.Tablet.Brightness < 0;
-        CursoreLuce.Value = settings.Tablet.Brightness < 0 ? 60 : settings.Tablet.Brightness;
-        CursoreLuce.IsEnabled = settings.Tablet.Brightness >= 0;
-        TestoLuce.Text = settings.Tablet.Brightness < 0 ? "auto" : settings.Tablet.Brightness + "%";
-
-        var sezioni = settings.Tablet.Sezioni;
-        SpuntaSezDashboard.IsChecked = sezioni.Dashboard;
-        SpuntaSezDeck.IsChecked = sezioni.Deck;
-        SpuntaSezSchermo.IsChecked = sezioni.Schermo;
-        SpuntaSezCasa.IsChecked = sezioni.Casa;
-        SpuntaSezOrologio.IsChecked = sezioni.Orologio;
-        var senza = settings.Tablet.SenzaPc;
-        SpuntaSenzaDashboard.IsChecked = senza.Dashboard;
-        SpuntaSenzaDeck.IsChecked = senza.Deck;
-        SpuntaSenzaCasa.IsChecked = senza.Casa;
-        SpuntaSenzaOrologio.IsChecked = senza.Orologio;
         foreach (var spunta in new[] { SpuntaSezDashboard, SpuntaSezDeck, SpuntaSezSchermo, SpuntaSezCasa, SpuntaSezOrologio,
                                        SpuntaSenzaDashboard, SpuntaSenzaDeck, SpuntaSenzaCasa, SpuntaSenzaOrologio })
             spunta.Click += (_, _) =>
@@ -537,9 +516,6 @@ public partial class MainWindow : Window
                 settings.Tablet.Sezioni.Cambiate = DateTimeOffset.UtcNow.ToUnixTimeMilliseconds();
                 SalvaImpostazioni();
             };
-
-        TestoFps.Text = settings.Fps.ToString();
-        TestoQualita.Text = settings.Quality.ToString();
 
         CursoreFps.ValueChanged += (_, _) =>
         {
@@ -553,6 +529,7 @@ public partial class MainWindow : Window
         };
         SpuntaCursore.Click += (_, _) => SalvaImpostazioni();
         ElencoAcceso.SelectionChanged += (_, _) => { if (!caricamento) SalvaImpostazioni(); };
+        ElencoInternet.SelectionChanged += (_, _) => { if (!caricamento) SalvaImpostazioni(); };
         SpuntaLuceSistema.Click += (_, _) =>
         {
             CursoreLuce.IsEnabled = SpuntaLuceSistema.IsChecked != true;
@@ -570,6 +547,61 @@ public partial class MainWindow : Window
         caricamento = false;
         AggiornaDashboardImmagine();
         CollegamentoCambiato(false);
+    }
+
+    /// <summary>
+    /// Mette nei campi quel che c'e' in <see cref="settings"/>. A parte dagli eventi
+    /// perche' serve di nuovo cambiando postazione, e gli eventi vanno attaccati una volta.
+    /// </summary>
+    private void MostraImpostazioni()
+    {
+        bool prima = caricamento;
+        caricamento = true;
+
+        CampoIndirizzo.Text = settings.Host;
+        CampoPorta.Text = settings.Port.ToString();
+
+        CursoreFps.Value = settings.Fps;
+        CursoreQualita.Value = settings.Quality;
+        SpuntaCursore.IsChecked = settings.DrawCursor;
+        ElencoGesti.SelectedIndex = settings.Touch.Mode.Equals("pointer", StringComparison.OrdinalIgnoreCase) ? 1 : 0;
+
+        ElencoAcceso.SelectedIndex = settings.Tablet.KeepAwake switch
+        {
+            "never" => 0,
+            "always" => 2,
+            _ => 1,
+        };
+        SpuntaLuceSistema.IsChecked = settings.Tablet.Brightness < 0;
+        ElencoInternet.SelectedIndex = settings.Tablet.Internet switch { "dati" => 1, "tutto" => 2, _ => 0 };
+        CursoreLuce.Value = settings.Tablet.Brightness < 0 ? 60 : settings.Tablet.Brightness;
+        CursoreLuce.IsEnabled = settings.Tablet.Brightness >= 0;
+        TestoLuce.Text = settings.Tablet.Brightness < 0 ? "auto" : settings.Tablet.Brightness + "%";
+
+        var sezioni = settings.Tablet.Sezioni;
+        SpuntaSezDashboard.IsChecked = sezioni.Dashboard;
+        SpuntaSezDeck.IsChecked = sezioni.Deck;
+        SpuntaSezSchermo.IsChecked = sezioni.Schermo;
+        SpuntaSezCasa.IsChecked = sezioni.Casa;
+        SpuntaSezOrologio.IsChecked = sezioni.Orologio;
+        var senza = settings.Tablet.SenzaPc;
+        SpuntaSenzaDashboard.IsChecked = senza.Dashboard;
+        SpuntaSenzaDeck.IsChecked = senza.Deck;
+        SpuntaSenzaCasa.IsChecked = senza.Casa;
+        SpuntaSenzaOrologio.IsChecked = senza.Orologio;
+
+        TestoFps.Text = settings.Fps.ToString();
+        TestoQualita.Text = settings.Quality.ToString();
+
+        ElencoApertura.SelectedIndex = settings.Comportamento.CollegaAllApertura switch
+        {
+            "usb" => 1,
+            "wifi" => 2,
+            "auto" => 3,
+            _ => 0,
+        };
+
+        caricamento = prima;
     }
 
     private void AggiornaDashboardImmagine()
@@ -597,6 +629,7 @@ public partial class MainWindow : Window
             _ => "screen",
         };
         settings.Tablet.Brightness = SpuntaLuceSistema.IsChecked == true ? -1 : (int)CursoreLuce.Value;
+        settings.Tablet.Internet = ElencoInternet.SelectedIndex switch { 1 => "dati", 2 => "tutto", _ => "no" };
         settings.Tablet.Sezioni.Dashboard = SpuntaSezDashboard.IsChecked == true;
         settings.Tablet.Sezioni.Deck = SpuntaSezDeck.IsChecked == true;
         settings.Tablet.Sezioni.Schermo = SpuntaSezSchermo.IsChecked == true;
@@ -607,18 +640,12 @@ public partial class MainWindow : Window
         settings.Tablet.SenzaPc.Casa = SpuntaSenzaCasa.IsChecked == true;
         settings.Tablet.SenzaPc.Orologio = SpuntaSenzaOrologio.IsChecked == true;
 
-        try
-        {
-            ConfigFile.Save(settingsPath, settings);
-        }
-        catch (IOException e)
-        {
-            Registra($"Impostazioni non salvate: {e.Message}", true);
-        }
+        ScriviImpostazioni();
 
         AggiornaDashboardImmagine();
 
         engine.SettingsChanged();
+        AggiornaInternet();
         // Le preferenze del tablet contano solo se il tablet le riceve: si
         // rimandano a ogni salvataggio, che e' economico e evita di doversi
         // ricordare quali cambiano cosa.

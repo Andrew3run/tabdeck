@@ -12,7 +12,7 @@ import android.view.View;
 /**
  * Le icone della barra laterale.
  *
- * Sono le stesse icone di AiWork OS — Lucide, a tratto, in un quadrato di 24 —
+ * Sono le stesse icone dell'app sul PC — Lucide, a tratto, in un quadrato di 24 —
  * lette da {@link Lucide}. Prima erano una dozzina di primitive disegnate a mano
  * per voce: si leggevano, ma ognuna aveva il suo peso e le sue proporzioni, e
  * accanto all'app del PC sembravano di un'altra famiglia. La voce di

@@ -9,10 +9,6 @@ import android.util.Log;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import java.io.ByteArrayOutputStream;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
-import java.net.URL;
 import java.util.Locale;
 
 /**
@@ -253,22 +249,8 @@ public final class Meteo {
         return context.getSharedPreferences(PREFS, Context.MODE_PRIVATE);
     }
 
+    /** Diretta, o attraverso il PC col cavo: vedi {@link Web}. */
     private static String scarica(String indirizzo) throws Exception {
-        HttpURLConnection c = (HttpURLConnection) new URL(indirizzo).openConnection();
-        c.setConnectTimeout(8000);
-        c.setReadTimeout(8000);
-        c.setRequestProperty("User-Agent", "TabDeck");
-        InputStream in = null;
-        try {
-            in = c.getInputStream();
-            ByteArrayOutputStream out = new ByteArrayOutputStream();
-            byte[] buf = new byte[4096];
-            int n;
-            while ((n = in.read(buf)) > 0) out.write(buf, 0, n);
-            return out.toString("UTF-8");
-        } finally {
-            if (in != null) in.close();
-            c.disconnect();
-        }
+        return Web.get(indirizzo);
     }
 }

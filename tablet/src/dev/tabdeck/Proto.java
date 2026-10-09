@@ -103,8 +103,8 @@ public final class Proto {
     /**
      * Da 0x50 a 0x5F i frame sono delle estensioni. Il nucleo legge PLUGIN
      * (annunci e risposte, vedi MainActivity) e PLUGIN_CODICE, e passa il resto
-     * alle estensioni caricate: senza, i frame si scartano. I nomi dicono l'uso
-     * che ne fa l'estensione AiWork OS.
+     * alle estensioni caricate: senza, i frame si scartano. I nomi dicono un uso
+     * possibile, non obbligato.
      */
     public static final int PLUGIN          = 0x50;
     /** PC -> tablet: [u8 lunghezza id][id][pacchetto Android dell'estensione]. */
@@ -118,6 +118,15 @@ public final class Proto {
     public static final int SALVASCHERMO      = 0x60;
     /** PC -> tablet: [u16 lunghezza nome][nome][JPEG 1024x600]. */
     public static final int SALVASCHERMO_FOTO = 0x61;
+    /** PC -> tablet, JSON: {"id":n,"testo":"..."} o {"id":n,"errore":"..."}. Vedi {@link Web}. */
+    public static final int WEB_RISPOSTA      = 0x62;
+
+    /**
+     * Il secondo canale del cavo, per « Internet col cavo: tutto il tablet ». Il PC ci
+     * arriva con adb forward come sul primo, e ci passano pacchetti IP: [u16 lunghezza][pacchetto].
+     * Vedi {@link Tunnel}.
+     */
+    public static final String SOCKET_RETE = "tabdeck-rete";
     /** PC -> tablet, JSON: quale strumento e' davanti dall'altra parte. */
     public static final int PLUGIN_CONTESTO = 0x51;
     /** PC -> tablet, JSON: come sta lo strumento. */
@@ -152,6 +161,8 @@ public final class Proto {
      * schermo resta indietro di secondi: sembra bloccato.
      */
     public static final int ACK     = 0x25;
+    /** Payload JSON: {"id":n,"url":"http://..."} — una pagina che il PC scarica per il tablet. Vedi {@link Web}. */
+    public static final int WEB     = 0x26;
 
     // Azioni del frame TOUCH.
     public static final int TOUCH_DOWN  = 0;

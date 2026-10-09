@@ -457,6 +457,10 @@ public final class Link {
                 l.onFotoSalvaschermo(new String(buf, 2, nomeLen), buf, 2 + nomeLen, len - 2 - nomeLen);
                 break;
             }
+            case Proto.WEB_RISPOSTA:
+                // Qui sul thread di rete: chi aspetta la risposta sta su un altro thread, non sulla UI.
+                Web.risposta(new String(buf, 0, len));
+                break;
             case Proto.PLUGIN_CODICE: {
                 // Binario come l'icona, e per la stessa ragione: centinaia di KB
                 // di zip non devono passare da una stringa.

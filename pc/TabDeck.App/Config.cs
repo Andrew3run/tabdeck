@@ -26,7 +26,7 @@ public sealed class Settings
     /// Porta del PC che adb inoltra alla socket del tablet, sul cavo.
     ///
     /// Non e' la 8765 perche' sullo stesso PC la 8765 e' gia' del canale locale di
-    /// AiWork OS, che ascolta su tutte le interfacce: con le due applicazioni
+    /// un altro programma, che ascolta su tutte le interfacce: con le due applicazioni
     /// accese adb non riusciva a prenderla, e il cavo smetteva di collegarsi. Il
     /// lato tablet non cambia — adb inoltra verso la socket astratta, non verso
     /// una porta — quindi questo numero vive solo qui.
@@ -109,6 +109,56 @@ public sealed class Settings
 
     /// <summary>Quello che si sceglie in Gestione › Salvaschermo.</summary>
     public SalvaschermoSettings Salvaschermo { get; set; } = new();
+
+    /// <summary>Casa, Ufficio...: vedi <see cref="Postazione"/>. Vuoto in un file di prima.</summary>
+    public List<Postazione> Postazioni { get; set; } = new();
+
+    /// <summary>Il nome della postazione in cui si sta adesso.</summary>
+    public string PostazioneAttiva { get; set; } = "";
+}
+
+/// <summary>
+/// Un posto dove sta il tablet: Casa, Ufficio. In ogni posto cambia quel che
+/// gli serve — un altro deck, un altro indirizzo in rete, niente sezione Casa
+/// in ufficio — e cambiarlo a mano voce per voce a ogni spostamento era il
+/// motivo per non farlo.
+///
+/// La postazione non ha un editor suo: e' una fotografia delle scelte che si
+/// fanno nelle pagine di sempre. Quella attiva si aggiorna a ogni salvataggio,
+/// cosi' quello che si sistema stando « in ufficio » resta all'ufficio, e
+/// passando a « Casa » torna com'era a casa. Il resto delle impostazioni
+/// (schermo, qualita', avvio) e' del PC, non del posto, e non ne fa parte.
+/// </summary>
+public sealed class Postazione
+{
+    public string Nome { get; set; } = "";
+
+    /// <summary>Il profilo del deck.</summary>
+    public string Profilo { get; set; } = "";
+
+    /// <summary>L'indirizzo del tablet in rete: ogni rete da' il suo.</summary>
+    public string Host { get; set; } = "";
+
+    /// <summary>Come <see cref="ComportamentoSettings.CollegaAllApertura"/>.</summary>
+    public string Collega { get; set; } = "no";
+
+    public string KeepAwake { get; set; } = "screen";
+    public int Brightness { get; set; } = -1;
+
+    /// <summary>Come <see cref="TabletSettings.Internet"/>: a casa c'e' il Wi-Fi, in ufficio magari no.</summary>
+    public string Internet { get; set; } = "no";
+    public SezioniTablet Sezioni { get; set; } = new();
+    public SezioniTablet SenzaPc { get; set; } = new();
+
+    /// <summary>
+    /// Le luci di casa. Spente, al tablet arriva un elenco vuoto e la sezione Casa non
+    /// c'e', e sul PC spariscono la pagina Casa e le routine: in ufficio non si
+    /// accendono le lampade di casa per sbaglio. Le luci restano in luci.json.
+    /// </summary>
+    public bool Luci { get; set; } = true;
+
+    /// <summary>Gli id delle estensioni accese. Null in un file di prima: non si toccano.</summary>
+    public List<string>? Estensioni { get; set; }
 }
 
 public sealed class SceltaEstensione
@@ -183,6 +233,13 @@ public sealed class TabletSettings
     public int Brightness { get; set; } = -1;
 
     /// <summary>
+    /// Internet al tablet attraverso il PC, col cavo: "no"; "dati", solo quel che chiede
+    /// TabDeck (il meteo), scaricato dal PC; "tutto", una VPN sul tablet che porta al PC il
+    /// traffico di tutte le app (Tunnel.java, Rete.cs). Spento di partenza.
+    /// </summary>
+    public string Internet { get; set; } = "no";
+
+    /// <summary>
     /// Quali sezioni compaiono nella barra col PC collegato. Impostazioni c'e' sempre: e'
     /// la via d'uscita. Il momento dell'ultima scelta, per tutte e due, sta qui.
     /// </summary>
@@ -208,6 +265,8 @@ public sealed class SezioniTablet
     /// recente: senza, una delle due si perdeva senza dirlo.
     /// </summary>
     public long Cambiate { get; set; }
+
+    public SezioniTablet Copia() => (SezioniTablet)MemberwiseClone();
 }
 
 /// <summary>

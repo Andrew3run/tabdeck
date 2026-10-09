@@ -33,8 +33,7 @@ public static class Proto
     /// Da 0x50 a 0x5F i frame sono delle estensioni, nei due versi. Il nucleo legge
     /// solo il 0x50 (annunci, richieste del pacchetto, « pronta ») e il 0x5E (il
     /// pacchetto del tablet); da 0x51 a 0x5D li passa all'estensione accesa senza
-    /// guardarci dentro. I nomi dicono l'uso che ne fa l'estensione AiWork OS, che
-    /// e' quella per cui sono nati: un'altra li usa come vuole.
+    /// guardarci dentro. I nomi dicono un uso possibile: ogni estensione li usa come vuole.
     /// </summary>
     public const byte Plugin = 0x50;
     public const byte PluginContesto = 0x51;
@@ -62,6 +61,10 @@ public static class Proto
     public const byte Wheel = 0x23;
     public const byte Ready = 0x24;
     public const byte Ack = 0x25;
+    /// <summary>Tablet -> PC: {"id":n,"url":"..."}, una pagina da scaricare per lui. Vedi Web.java.</summary>
+    public const byte Web = 0x26;
+    /// <summary>PC -> tablet: {"id":n,"testo":"..."} o {"id":n,"errore":"..."}.</summary>
+    public const byte WebRisposta = 0x62;
 
     public const byte TouchDown = 0;
     public const byte TouchMove = 1;
@@ -120,6 +123,9 @@ public sealed class Link : IDisposable
 
     /// <summary>Scelte fatte sul tablet, {"sezioni":{...}}. Thread di lettura.</summary>
     public event Action<string>? OnConfig;
+
+    /// <summary>Il tablet chiede una pagina, {"id":n,"url":"..."}. Thread di lettura.</summary>
+    public event Action<string>? OnWeb;
 
     public bool IsConnected => client?.Connected == true;
 
@@ -413,6 +419,10 @@ public sealed class Link : IDisposable
 
             case Proto.Config:
                 OnConfig?.Invoke(Encoding.UTF8.GetString(p, 0, len));
+                break;
+
+            case Proto.Web:
+                OnWeb?.Invoke(Encoding.UTF8.GetString(p, 0, len));
                 break;
 
             case Proto.Ready:

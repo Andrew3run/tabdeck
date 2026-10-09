@@ -152,6 +152,32 @@ Cambiare profilo **salva**. Non e' una scorciatoia: il file li contiene tutti,
 quindi passare da uno all'altro lo riscrive comunque, e allora tanto vale che
 quello che si stava montando finisca su disco invece di restare per aria.
 
+## Le postazioni
+
+Il profilo cambia i pulsanti; la **postazione** cambia il posto. A casa il
+tablet sta sulla rete di casa, mostra la sezione Casa e apre il deck di tutti i
+giorni; in ufficio ha un altro indirizzo, niente lampade e il deck del lavoro.
+Una postazione si ricorda:
+
+- il profilo del deck;
+- l'indirizzo del tablet in rete e come collegarsi all'apertura;
+- le sezioni della barra del tablet, col PC e senza;
+- quando tenere acceso il pannello e la luminosita';
+- le luci di casa: spente, il tablet riceve un elenco vuoto e niente sezione
+  Casa, e sul PC spariscono la pagina Casa e le routine della dashboard;
+- le estensioni accese.
+
+Si sceglie nelle pagine di sempre, e quella attiva se lo ricorda a ogni
+salvataggio; in **Gestione › Postazioni**, sotto l'elenco, deck, luci, sezioni
+ed estensioni si scelgono anche a mano per la postazione selezionata, anche
+per una in cui non si sta. Si creano, rinominano e tolgono in **Gestione ›
+Postazioni**, oppure da « Nuova postazione… » nell'elenco in cima alla
+finestra; una nuova parte da com'e' tutto adesso. Dallo stesso elenco, accanto
+al segnaposto, si passa dall'una all'altra: le scelte tornano
+nelle pagine e, col tablet collegato, gli arrivano subito. Il collegamento in
+corso non si tocca. Stanno in `config/tabdeck.json`; un file di prima ne
+prende una sola, « Casa », con le scelte che aveva.
+
 ## Le cartelle
 
 Quindici celle su una pagina, e le pagine si sfogliano di lato: finche' i
@@ -239,7 +265,7 @@ sistema.
 
 | Vincolo | Conseguenza sul progetto |
 |---|---|
-| `adb reverse` non esiste su Android 4.4 (serve API 21+) | Il **tablet fa da server**, il PC da client, su `adb forward tcp:18765 localabstract:tabdeck` (la 8765 del PC e' di AiWork OS). Il WiFi fa lo stesso per coerenza, sulla 8765 del tablet |
+| `adb reverse` non esiste su Android 4.4 (serve API 21+) | Il **tablet fa da server**, il PC da client, su `adb forward tcp:18765 localabstract:tabdeck` (la 8765 del PC e' gia' occupata da un altro programma). Il WiFi fa lo stesso per coerenza, sulla 8765 del tablet |
 | AndroidX richiede minSdk 21 | **Zero dipendenze**: solo framework Android, Java 7. APK di 29 KB |
 | 1GB RAM, GPU Vivante GC1000 | Frame in RGB_565, bitmap riusate, aggiornamento a tessere invece che a schermo intero. Il deck e' una sola View disegnata a mano, non quindici widget |
 | Font di KitKat | I glifi sono stati provati uno per uno sul pannello. Ci sono: ▲ ▼ ◀ ▶ ■ □ ▢ ▣ ▤ ▥ ▦ ▧ ▨ ▩ ▪ ▫ ◆ ◇ ○ ● ◉ ◎ ◐ × ÷ ± – + ↻. Non ci sono ▬ ▭ ▮ ▯: escono come celle vuote. Per questo i pulsanti del deck non usano il font ma le **icone Lucide** disegnate come tracciati (`Pittogrammi.java` e `Pittogrammi.cs`, generati insieme da `tools/pittogrammi/genera.py`); i glifi restano per le lampade di Casa e per i pulsanti di prima |
@@ -670,8 +696,7 @@ fuoco. Password e gettoni stanno in `config/streaming.json`, che
 TabDeck fa tutto quello che c'e' qui sopra da solo. Quello che non fa di serie
 arriva come **estensione**: un file `.tabdeck` che si installa da **Sistema ›
 Estensioni › Installa da file**, si accende con una spunta e si toglie con
-« Rimuovi ». Oggi ce n'e' una, **AiWork OS**, che fa del tablet il pannello
-dello strumento aperto in AiWork.
+« Rimuovi ».
 
 Un'estensione ha due parti, e il file le porta insieme:
 
@@ -689,21 +714,53 @@ L'APK di TabDeck non contiene nessuna estensione. Rimossa sul PC, sparisce anche
 dal tablet, subito se e' collegato o al collegamento dopo se non lo e'. Se ne
 accende una alla volta: i frame da 0x51 a 0x5D non dicono di chi sono.
 
-Se AiWork OS e' installato sul PC ma chiuso, la pagina dell'estensione sul
-tablet non resta muta: ha il pulsante **« Apri AiWork OS »**. Lo esegue TabDeck
-sul PC — AiWork, chiuso, non puo' — e lo apre come utente normale, non da
-amministratore come gira TabDeck. Se AiWork non e' installato il pulsante non
-c'e'.
-
 Un'estensione **non sta in questa cartella**: e' un progetto a se', accanto, che
-compila contro TabDeck ma che TabDeck non conosce. AiWork OS e' in
-`..\TabDeck AiWork`, con la sua guida in `LEGGIMI.md`:
+compila contro TabDeck ma che TabDeck non conosce.
 
-    ..\TabDeck AiWork\costruisci.ps1       -> ..\TabDeck AiWork\dist\AiWork OS.tabdeck
+### Come se ne crea una
+
+Un file `.tabdeck` e' uno zip con tre file, tutti in cima:
+
+| File | Cos'e' |
+|---|---|
+| `estensione.json` | il manifesto, qui sotto |
+| la DLL del PC | una classe che implementa `TabDeck.Estensioni.IEstensione` |
+| l'APK del tablet | un pacchetto `dev.tabdeck.<id>` con una classe che implementa `dev.tabdeck.Plugin` |
+
+    {
+      "id": "esempio",
+      "nome": "Esempio",
+      "versione": "1.0",
+      "descrizione": "Una riga per la pagina Estensioni",
+      "assembly": "Esempio.dll",
+      "tipo": "Esempio.Estensione",
+      "apk": "esempio.apk",
+      "classe": "dev.tabdeck.esempio.Pannello",
+      "opzioni": [ { "chiave": "suoni", "etichetta": "Suoni", "predefinita": true } ]
+    }
+
+**Lato PC** — un progetto .NET (`net10.0-windows`) che referenzia `TabDeck.dll`.
+La classe di `tipo` ha un costruttore senza argomenti e implementa
+`IEstensione` (`pc/TabDeck.App/Estensioni/Contratto.cs`): `Accendi` riceve un
+`IOspite`, che e' tutto quello che TabDeck presta — le spunte di `opzioni`, il
+registro, l'evento `TabletPronto`, i frame in arrivo dal tablet (`Frame`) e
+`Manda` per quelli verso il tablet, JSON con tipo da 0x51 a 0x5D. Spegnerla e'
+`Dispose`.
+
+**Lato tablet** — un APK compilato contro `android.jar` (API 19) e le classi di
+TabDeck, senza includerle. La classe di `classe` implementa `Plugin`
+(`tablet/src/dev/tabdeck/Plugin.java`): `vista` disegna la sezione, `icona` la
+voce nella barra, `suFrame` riceve i frame del PC, `mostrato` e `indietro`
+dicono quando la sezione e' davanti e quando si preme indietro. Va firmato con
+la stessa chiave di TabDeck (`tablet/keystore`, fuori dal repository): un
+pacchetto firmato con un'altra il tablet lo rifiuta.
+
+Zippati i tre file, l'estensione si installa da **Sistema › Estensioni ›
+Installa da file**.
 
 Un pacchetto per un altro PC le porta accanto solo se gli si dice quali:
 
-    .\pacchetto.ps1 -Estensioni "..\TabDeck AiWork\dist\AiWork OS.tabdeck"
+    .\pacchetto.ps1 -Estensioni "..\percorso\Estensione.tabdeck"
 
 ## La Dashboard del tablet
 
@@ -798,6 +855,36 @@ tutto quello che si era salvato, rimette in servizio le app messe a riposo e
 toglie l'inoltro di adb. Sul PC non si tocca niente. Gli script
 `pc\pacchetto\Tablet.ps1`, `alleggerisci.ps1` e `ripristina.ps1` restano per chi
 lavora da riga di comando.
+
+### Tenere l'app del tablet al passo
+
+Nella stessa pagina **App sul tablet** dice se l'app installata e' la stessa di
+`tablet\build\TabDeck.apk`: col cavo legge l'APK installato e ne confronta il
+contenuto. **Aggiorna** la reinstalla tenendo i dati, la riapre e, se si era
+collegati, si ricollega. Il controllo parte da solo quando si apre la pagina e
+quando ci si collega col cavo, e legge soltanto; se l'app e' da aggiornare lo
+dice anche la dashboard, col suo pulsante. In rete si puo' solo dire: per
+installare serve il cavo.
+
+## Internet col cavo
+
+Senza Wi-Fi il tablet puo' usare la rete del PC attraverso il cavo. Si sceglie in
+**Gestione › Tablet › Internet col cavo**, e la postazione se lo ricorda:
+
+- **Niente**, com'era.
+- **Solo TabDeck**: quel che TabDeck chiede a internet (oggi il meteo) lo scarica
+  il PC e lo manda al tablet sul collegamento di sempre. Funziona anche in rete.
+- **Tutto il tablet**: sul tablet parte una VPN locale che porta al PC il
+  traffico di tutte le app, sul secondo canale del cavo
+  (`adb forward tcp:18766 localabstract:tabdeck-rete`); il PC apre le
+  connessioni vere e rimanda le risposte. Anche le lampade di casa si
+  raggiungono cosi', dal PC. La prima volta il tablet chiede il consenso alla
+  VPN. Vale solo col cavo: in rete non parte.
+
+E' lo schema di gnirehtet rovesciato: gnirehtet vuole `adb reverse`, che su
+Android 4.4 non c'e'. Passano IPv4, TCP e UDP (il DNS si gira a quello del PC);
+alcune app di KitKat dicono « nessuna connessione » se non vedono il Wi-Fi,
+anche quando la rete c'e'.
 
 ## Il salvaschermo
 
