@@ -28,4 +28,5 @@ com.sec.android.app.keyguard     # blocco schermo Samsung, gemello di com.androi
 com.sec.android.providers.security    # keystore
 com.marvell.graphics.ceu         # roba della GPU Vivante: non si tocca
 com.marvell.usbsetting           # modalita' USB, quindi adb
+com.google.android.gsf           # Play Services non si lascia bloccare e senza questo va in crash a ripetizione
 dev.tabdeck                      # noi
