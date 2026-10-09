@@ -707,8 +707,7 @@ Un'estensione ha due parti, e il file le porta insieme:
   Android e non passa da adb: il PC lo annuncia con la sua impronta, il tablet
   lo chiede se non ce l'ha, e arriva sul collegamento stesso, cavo o rete. Il
   tablet lo accetta solo se si chiama `dev.tabdeck.<id>` ed e' firmato con la
-  chiave di TabDeck — la rete la apre chiunque stia sul Wi-Fi — e lo carica
-  accanto al suo codice, con la sua voce nella barra dopo le sezioni.
+  chiave di TabDeck — la rete la apre chiunque stia sul Wi-Fi — e lo carica accanto al suo codice. Sul tablet le estensioni stanno dietro una voce sola, **App**, che apre una griglia con una tessera per estensione.
 
 L'APK di TabDeck non contiene nessuna estensione. Rimossa sul PC, sparisce anche
 dal tablet, subito se e' collegato o al collegamento dopo se non lo e'. Se ne
@@ -817,7 +816,7 @@ tablet. Una sezione tolta smette
 di comparire e basta: le sveglie suonano lo stesso, e lo schermo acceso dal PC si
 vede lo stesso, perche' e' un gesto esplicito. **Impostazioni c'e' sempre**, per
 ultima: e' la strada per tornare indietro anche con tutto spento. L'ordine e'
-fisso: sezioni, estensioni, poi il gruppo di servizio (connetti, Wi-Fi, riavvia,
+fisso: sezioni, App (solo con almeno un'estensione accesa), poi il gruppo di servizio (connetti, Wi-Fi, riavvia,
 impostazioni). La voce **Schermo** compare solo mentre il PC sta mandando lo
 schermo: senza, portava a un rettangolo nero. Collegarsi non riporta piu' il
 tablet al deck — resta nella sezione in cui era; il deck arriva quando lo si

@@ -73,6 +73,8 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
     private static final int MODE_SVEGLIA = 5;
     private static final int MODE_ESTENSIONE = 6;
     private static final int MODE_DASHBOARD = 7;
+    private static final int MODE_APP = 8;
+    private static final int MODE_METEO = 9;
     private static final String KEY_ESTENSIONE = "estensione";
 
     /**
@@ -117,6 +119,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
     private static final int TINTA_CASA = 0xFF4FD08F;
     private static final int TINTA_OROLOGIO = 0xFFFFB454;
     private static final int TINTA_SCHERMO = 0xFF4FC3E8;
+    private static final int TINTA_APP = 0xFFFF7A9C;
 
     /** Il fondo della barra: lo tinge la sezione aperta, vedi {@link #tingiBarra}. */
     private GradientDrawable fondoBarra;
@@ -150,8 +153,11 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
     private int ultimoOrologio = MODE_TIMER;
     /** Le estensioni caricate, nell'ordine in cui sono arrivate. */
     private final LinkedHashMap<String, Voce> voci = new LinkedHashMap<String, Voce>();
-    /** Le loro voci nella barra: fra le sezioni e il gruppo di servizio. */
-    private LinearLayout railEstensioni;
+    /** La voce App nella barra, fra le sezioni e il gruppo di servizio. */
+    private RailTab tabApp;
+    /** La griglia delle estensioni accese. */
+    private AppView appView;
+    private MeteoView meteoView;
     /** Quella aperta in MODE_ESTENSIONE. */
     private String estensioneDavanti = "";
     private FrameLayout content;
@@ -398,6 +404,16 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         dashboardView = new DashboardView(this, misure, luci, ora, azioniDashboard);
         content.addView(dashboardView, new FrameLayout.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        appView = new AppView(this, new AppView.Azione() {
+            @Override public void apri(String id) { apriEstensione(id); }
+        });
+        content.addView(appView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
+        meteoView = new MeteoView(this, new MeteoView.Azione() {
+            @Override public void indietro() { setMode(MODE_DASHBOARD, true); }
+        });
+        content.addView(meteoView, new FrameLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.MATCH_PARENT));
         // Luci ha un ascoltatore solo, e le luci si vedono in due posti: la Casa e la Dashboard.
         luci.setAscolto(new Luci.Ascolto() {
             @Override public void luceCambiata(Lampada l) {
@@ -524,21 +540,23 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         tabTimer = new RailTab(RailIcon.TIMER, "Orologio", TINTA_OROLOGIO, new View.OnClickListener() {
             @Override public void onClick(View v) { setMode(ultimoOrologio, true); }
         });
-        // In cima il marchio, come nella barra dell'app sul PC.
-        bar.addView(new Marchio(this), new LinearLayout.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT, dp(48)));
+        // Niente marchio in cima: non faceva nulla. Uno spazio tiene la Home dove la mano la cerca.
+        bar.addView(new View(this), new LinearLayout.LayoutParams(
+                ViewGroup.LayoutParams.MATCH_PARENT, dp(14)));
         bar.addView(tabDashboard.view, rowParams());
         bar.addView(tabDeck.view, rowParams());
         bar.addView(tabScreen.view, rowParams());
         bar.addView(tabLuci.view, rowParams());
         bar.addView(tabTimer.view, rowParams());
 
-        // Le estensioni vengono dopo le sezioni di TabDeck, in un gruppo loro:
-        // compaiono e spariscono col PC, e le sezioni di sempre restano dove la
-        // mano le cerca.
-        railEstensioni = new LinearLayout(this);
-        railEstensioni.setOrientation(LinearLayout.VERTICAL);
-        bar.addView(railEstensioni, rowParams());
+        // Le estensioni stanno tutte dietro una voce sola, dopo le sezioni di
+        // TabDeck: con due o tre voci una per estensione la barra non bastava.
+        // Compare e sparisce col PC, e le sezioni di sempre restano dove la mano
+        // le cerca.
+        tabApp = new RailTab(RailIcon.ESTENSIONE, "App", TINTA_APP, new View.OnClickListener() {
+            @Override public void onClick(View v) { setMode(MODE_APP, true); }
+        });
+        bar.addView(tabApp.view, rowParams());
 
         // Sotto le sezioni, dopo una lineetta, Impostazioni e « chiudi »: piccole e
         // grigie, perche' contano meno. Connetti al PC sta nella Home e nelle
@@ -720,6 +738,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         // L'estensione aperta ieri, oggi non annunciata: si va sulla prima sezione
         // che c'e' invece di aprire una pagina vuota.
         if (next == MODE_ESTENSIONE && voceDavanti() == null) next = primoModo();
+        if (next == MODE_APP && !ciSonoApp()) next = primoModo();
         mode = next;
         for (Voce v : voci.values()) {
             boolean davanti = next == MODE_ESTENSIONE && v.id.equals(estensioneDavanti);
@@ -735,7 +754,12 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         casaView.setVisibility(next == MODE_LUCI ? View.VISIBLE : View.INVISIBLE);
         dashboardView.setVisibility(next == MODE_DASHBOARD ? View.VISIBLE : View.INVISIBLE);
         dashboardView.attivo(next == MODE_DASHBOARD);
-        tabDashboard.setActive(next == MODE_DASHBOARD);
+        appView.setVisibility(next == MODE_APP ? View.VISIBLE : View.INVISIBLE);
+        meteoView.setVisibility(next == MODE_METEO ? View.VISIBLE : View.INVISIBLE);
+        if (next == MODE_METEO) meteoView.dati(dashboardView.meteoDati());
+        // La voce App resta accesa anche dentro un'estensione: e' li' che si e' entrati.
+        tabApp.setActive(next == MODE_APP || next == MODE_ESTENSIONE);
+        tabDashboard.setActive(next == MODE_DASHBOARD || next == MODE_METEO);
         boolean orologio = next == MODE_TIMER || next == MODE_SVEGLIA;
         orologioView.setVisibility(orologio ? View.VISIBLE : View.INVISIBLE);
         if (orologio) orologioView.mostra(next == MODE_SVEGLIA);
@@ -747,7 +771,8 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         tabTimer.setActive(orologio);
         tingiBarra(next == MODE_DASHBOARD ? TINTA_HOME : next == MODE_DECK ? TINTA_DECK
                 : next == MODE_LUCI ? TINTA_CASA : orologio ? TINTA_OROLOGIO
-                : onScreen ? TINTA_SCHERMO : next == MODE_SETTINGS ? 0xFF8A8D95 : TINTA_HOME);
+                : onScreen ? TINTA_SCHERMO : next == MODE_APP || next == MODE_ESTENSIONE ? TINTA_APP
+                : next == MODE_SETTINGS ? 0xFF8A8D95 : TINTA_HOME);
         if (orologio) ultimoOrologio = next;
         // Lo stato delle lampade si rilegge entrando nella sezione, non a ciclo:
         // interrogare tre lampade ogni tot secondi vorrebbe dire tenere acceso
@@ -1038,6 +1063,8 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         @Override public void connetti() { annunciaAlPc(); }
         @Override public void apriImpostazioni() { setMode(MODE_SETTINGS, true); }
         @Override public void apriEstensione(String id) { MainActivity.this.apriEstensione(id); }
+        @Override public void apriApp() { setMode(MODE_APP, true); }
+        @Override public void apriMeteo() { setMode(MODE_METEO, true); }
     };
 
     /** Collegamento, sezioni ed estensioni con la voce accesa: la Dashboard mostra quelle. */
@@ -1058,6 +1085,8 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         }
         dashboardView.stato(link.isConnected(), link.transport(), sezDeck, sezCasa, sezOrologio,
                 sezSchermo && schermoAcceso, estese);
+        if (appView == null || tabApp == null) return;
+        appView.elenco(estese);
     }
 
     // ---- sezioni ----
@@ -1188,8 +1217,14 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
             case MODE_TIMER:
             case MODE_SVEGLIA: return sezOrologio;
             case MODE_ESTENSIONE: return voceDavanti() != null;
+            case MODE_APP: return ciSonoApp();
             default: return true;
         }
+    }
+
+    private boolean ciSonoApp() {
+        // La pagina c'e' sempre: senza estensioni dice che non ce ne sono.
+        return true;
     }
 
     /** Dove si va quando la sezione in cui si era non c'e' piu'. */
@@ -1310,7 +1345,6 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         RailTab tab = new RailTab(new RailIcon(this, icona), etichetta, new View.OnClickListener() {
             @Override public void onClick(View view) { apriEstensione(id); }
         });
-        railEstensioni.addView(tab.view, rowParams());
         Voce v = new Voce(id, impronta, p, vista, tab);
         voci.put(id, v);
         return v;
@@ -1341,7 +1375,6 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         Voce v = voci.remove(id);
         if (v == null) return;
         content.removeView(v.vista);
-        railEstensioni.removeView(v.tab.view);
         aggiornaDashboard();
     }
 
@@ -1722,6 +1755,9 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
                     // chiuso il dettaglio della lampada
                 } else if (mode == MODE_DECK && deck.risali()) {
                     // uscito da una cartella del deck
+                } else if (mode == MODE_ESTENSIONE && ciSonoApp()) {
+                    // dall'estensione si torna alla pagina App, e da li' alla Dashboard
+                    setMode(MODE_APP, true);
                 } else if (mode != MODE_DASHBOARD && mode != MODE_SCREEN && sezDashboard) {
                     setMode(MODE_DASHBOARD, true);
                 }

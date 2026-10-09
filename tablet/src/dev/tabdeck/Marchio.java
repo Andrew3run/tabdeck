@@ -10,7 +10,7 @@ import android.view.View;
 
 /**
  * Il marchio in cima alla barra: lo stesso quadratino dell'app sul PC, azzurro
- * che sfuma nel viola con la griglia del deck dentro. E' l'unica cosa colorata
+ * che sfuma nel viola con un tablet dentro. E' l'unica cosa colorata
  * della barra, e dice di che app si tratta senza scriverlo.
  */
 public final class Marchio extends View {
@@ -38,7 +38,7 @@ public final class Marchio extends View {
     protected void onDraw(Canvas c) {
         float r = 10f * densita;
         c.drawRoundRect(quadro, r, r, fondo);
-        Pittogrammi.disegna(c, "layout-grid", quadro.centerX(), quadro.centerY(), 18f * densita, segno);
+        Pittogrammi.disegna(c, "tablet", quadro.centerX(), quadro.centerY(), 18f * densita, segno);
     }
 
     @Override

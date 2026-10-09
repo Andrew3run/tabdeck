@@ -40,11 +40,9 @@ public final class RailIcon extends View {
 
     private static final String[] TRACCIATI = new String[12];
     static {
-        // layout-dashboard
-        TRACCIATI[DASHBOARD] = "M4,3 h5 a1,1 0 0 1 1,1 v7 a1,1 0 0 1 -1,1 h-5 a1,1 0 0 1 -1,-1 v-7 a1,1 0 0 1 1,-1 Z"
-                + " M15,3 h5 a1,1 0 0 1 1,1 v3 a1,1 0 0 1 -1,1 h-5 a1,1 0 0 1 -1,-1 v-3 a1,1 0 0 1 1,-1 Z"
-                + " M15,12 h5 a1,1 0 0 1 1,1 v7 a1,1 0 0 1 -1,1 h-5 a1,1 0 0 1 -1,-1 v-7 a1,1 0 0 1 1,-1 Z"
-                + " M4,16 h5 a1,1 0 0 1 1,1 v3 a1,1 0 0 1 -1,1 h-5 a1,1 0 0 1 -1,-1 v-3 a1,1 0 0 1 1,-1 Z";
+        // house: la casetta della Home; le luci hanno la lampadina
+        TRACCIATI[DASHBOARD] = "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
+                + " M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z";
         // keyboard: una tastiera e non una griglia, che accanto alla Dashboard si confondeva
         // layout-grid: la griglia del deck, la stessa icona dell'app sul PC
         TRACCIATI[DECK] = "M4 3h5a1 1 0 0 1 1 1v5a1 1 0 0 1 -1 1h-5a1 1 0 0 1 -1 -1v-5a1 1 0 0 1 1 -1Z"
@@ -67,9 +65,8 @@ public final class RailIcon extends View {
         // sliders-horizontal
         // settings: l'ingranaggio, come nel modello e nell'app sul PC
         TRACCIATI[SETTINGS] = "M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z M9 12a3 3 0 1 0 6 0a3 3 0 1 0 -6 0Z";
-        // home
-        TRACCIATI[CASA] = "M15 21v-8a1 1 0 0 0-1-1h-4a1 1 0 0 0-1 1v8"
-                + " M3 10a2 2 0 0 1 .709-1.528l7-5.999a2 2 0 0 1 2.582 0l7 5.999A2 2 0 0 1 21 10v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z";
+        // lightbulb: la sezione Casa sono le luci
+        TRACCIATI[CASA] = "M15 14c.2-1 .7-1.7 1.5-2.5 1-.9 1.5-2.2 1.5-3.5A6 6 0 0 0 6 8c0 1 .2 2.2 1.5 3.5.7.7 1.3 1.5 1.5 2.5 M9 18h6 M10 22h4";
         // monitor con una freccia che entra: e' il tablet che chiama il PC
         TRACCIATI[CONNETTI] = "M4,3 h16 a2,2 0 0 1 2,2 v10 a2,2 0 0 1 -2,2 h-16 a2,2 0 0 1 -2,-2 v-10 a2,2 0 0 1 2,-2 Z"
                 + " M8,21 L16,21 M12,17 L12,21 M7 10h8 M12 7l3 3-3 3";

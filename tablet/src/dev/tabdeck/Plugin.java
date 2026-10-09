@@ -9,8 +9,8 @@ import android.view.View;
  *
  * Non sta nell'APK di TabDeck. La manda il PC e la carica {@link Estensioni};
  * senza nessuna estensione deck, schermo, luci e orologio sono esattamente gli
- * stessi. Ogni estensione ha la sua voce nella barra laterale, fra le sezioni e
- * il gruppo di servizio.
+ * stessi. Le estensioni accese compaiono nella pagina App, una tessera
+ * ciascuna; la barra laterale ha una voce sola per tutte.
  */
 public interface Plugin {
 

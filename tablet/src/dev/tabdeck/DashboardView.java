@@ -56,6 +56,12 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
         void connetti();
         void apriImpostazioni();
         void apriEstensione(String id);
+
+        /** La pagina App, con tutte le estensioni accese. */
+        void apriApp();
+
+        /** La pagina Meteo, dal tocco sul meteo. */
+        void apriMeteo();
     }
 
     /** Un'estensione con la sua voce nella barra. */
@@ -134,6 +140,8 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
     /** Il velo sopra la foto: chiaro in alto dietro il meteo, scuro in fondo dietro l'ora. */
     private LinearGradient velo;
     private final Meteo meteo;
+    /** Dove si tocca per aprire la pagina Meteo. */
+    private final RectF areaMeteo = new RectF();
     /** La luce azzurra della Home, in alto. */
     private final Paint pAloneSezione = new Paint();
 
@@ -163,7 +171,7 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
     private String testoOra = "", testoData = "", testoSveglia = "", testoTimer = null;
 
     private static final int P_TEMPO = 0, P_SVEGLIA = 1, P_TIMER = 2, P_TITOLO_CASA = 3, P_TUTTE = 4,
-            P_CELLA = 5, P_FONDO = 6;
+            P_CELLA = 5, P_FONDO = 6, P_METEO = 7;
     private int premuto = -1, indice = -1;
 
     /** La pagina della casa, e lo sfoglio col dito. */
@@ -310,7 +318,7 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
         if (sezDeck) quale.add("deck");
         if (sezOrologio) quale.add("orologio");
         quale.add("impostazioni");
-        for (Voce v : estensioni) quale.add(v.id);
+        quale.add("app");
         if (!collegato || sezSchermo) quale.add("pc");
         areeFondo.clear();
         float altaFondo = Math.max(m.bersaglio * 1.5f, h * 0.125f);
@@ -479,6 +487,8 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
 
         // Il meteo, in alto a sinistra.
         Meteo.Dati d = meteo.dati();
+        if (d != null) areaMeteo.set(tempo.left + m.dp(10), tempo.top + m.dp(10), tempo.right - m.dp(10), tempo.top + m.dp(70));
+        else areaMeteo.setEmpty();
         float x = tempo.left + m.dp(24);
         if (d != null) {
             float y = tempo.top + m.dp(22);
@@ -692,6 +702,10 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
         return "";
     }
 
+    public Meteo.Dati meteoDati() {
+        return meteo.dati();
+    }
+
     @Override
     public void meteoCambiato(Meteo.Dati d) {
         if (davanti) invalidate();
@@ -800,11 +814,8 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
                 tasti.fondo(c, vetro, b, 0xFF7D8CA8, 0.45f, giu);
                 tasti.inRiga(c, b, -1, "settings", null, "Impostazioni", true);
             } else {
-                tasti.fondo(c, vetro, b, 0, 0f, giu);
-                Voce voce = null;
-                for (Voce v : estensioni) if (v.id.equals(cosa)) voce = v;
-                tasti.inRiga(c, b, voce != null && voce.icona != null ? -1 : Tratti.ESTENSIONE, null,
-                        voce != null ? voce.icona : null, voce != null ? voce.nome : cosa, false);
+                tasti.fondo(c, vetro, b, 0xFFFF7A9C, 0.5f, giu);
+                tasti.inRiga(c, b, Tratti.ESTENSIONE, null, null, "App", true);
             }
         }
     }
@@ -878,12 +889,14 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
                 }
             }
         }
-        if (sezOrologio && tempo.contains(x, y)) premuto = P_TEMPO;
+        if (areaMeteo.contains(x, y)) premuto = P_METEO;
     }
 
     private void agisci(int cosa, int i) {
         switch (cosa) {
-            case P_TEMPO:
+            case P_METEO:
+                azioni.apriMeteo();
+                break;
             case P_TIMER:
                 azioni.apriOrologio(false);
                 break;
@@ -914,7 +927,7 @@ public final class DashboardView extends View implements Luci.Ascolto, Ora.Ascol
                 else if ("pc".equals(q)) {
                     if (collegato) azioni.apriSchermo();
                     else azioni.connetti();
-                } else azioni.apriEstensione(q);
+                } else azioni.apriApp();
                 break;
             }
         }
