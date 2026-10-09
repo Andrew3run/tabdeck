@@ -72,8 +72,9 @@ di mezzo.
 Doppio clic. Windows chiede il consenso, e poi:
 
     cartella    copia il programma in C:\TabDeck
-    schermo     mette il Virtual Display Driver in C:\VirtualDisplayDriver,
-                lo registra e crea il monitor virtuale
+    schermo     se manca, mette il Virtual Display Driver in
+                C:\TabDeck\driver\schermo (scaricandolo se il pacchetto non
+                ce l'ha), lo registra e crea il monitor virtuale
     usb         se nel pacchetto c'e' un driver USB, lo mette nel magazzino
                 di Windows
     firewall    apre udp 8766 e 8767 in entrata, piu' il programma
@@ -260,9 +261,9 @@ quindi Windows lo accetta senza toccare nessun archivio di certificati. Il drive
 resta inerte finche' TabDeck non accende il monitor, e sparisce quando si preme
 « Ferma », quando si chiude o quando si stacca il tablet.
 
-Se nel pacchetto il driver non c'e', si prende da
-`github.com/VirtualDrivers/Virtual-Display-Driver`: metti `MttVDD.inf`,
-`MttVDD.dll` e `mttvdd.cat` in `driver\schermo\` e rilancia `Installa.bat`.
+Se nel pacchetto il driver non c'e', `Installa.bat` lo scarica da
+`github.com/VirtualDrivers/Virtual-Display-Driver` (versione fissata, impronta e
+firma controllate). Senza internet: rilancia `Installa.bat` quando c'e'.
 
 Senza driver TabDeck funziona lo stesso: restano il deck, le luci, il timer e la
 sveglia. Manca solo il secondo monitor.

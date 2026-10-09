@@ -324,7 +324,7 @@ Nel repository c'e' solo il sorgente. Il resto si procura a parte, una volta:
 | .NET 10 SDK | per `pc\TabDeck.App` |
 | Android SDK con `platforms\android-19` e un `build-tools` | `%LOCALAPPDATA%\Android\Sdk`, o `ANDROID_HOME`, per `tablet\build.ps1` |
 | [platform-tools](https://developer.android.com/tools/releases/platform-tools) di Google | scompattati in `tools\platform-tools` (adb) |
-| [Virtual Display Driver](https://github.com/VirtualDrivers/Virtual-Display-Driver) | `C:\VirtualDisplayDriver`, solo per `pacchetto.ps1` |
+| [Virtual Display Driver](https://github.com/VirtualDrivers/Virtual-Display-Driver) | lo scarica `pacchetto.ps1` (o `Installa.ps1`) se `C:\VirtualDisplayDriver` non c'e' |
 
 Restano fuori, apposta: `config\` (deck, chiavi delle lampade, OBS e Twitch:
 l'applicazione la ricrea vuota) e `tablet\keystore\` — la chiave che firma

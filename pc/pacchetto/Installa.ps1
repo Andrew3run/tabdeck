@@ -28,11 +28,11 @@ param(
 $ErrorActionPreference = 'Stop'
 $qui = $PSScriptRoot
 
-# Dove il driver dello schermo virtuale cerca i suoi file. Non e' una scelta
-# nostra: MttVDD legge vdd_settings.xml da questo percorso e basta, quindi il
-# driver sta li' anche se TabDeck sta altrove.
-$CasaDriver = 'C:\VirtualDisplayDriver'
+# Il driver dello schermo virtuale sta dentro TabDeck, in driver\schermo: lo
+# si dice al driver con la chiave VDDPATH (vedi SchermoVirtuale.ps1), senza la
+# quale cercherebbe vdd_settings.xml in C:\VirtualDisplayDriver.
 $IdSchermo  = 'Root\MttVDD'
+. (Join-Path $qui 'SchermoVirtuale.ps1')
 
 function Scrivi { param([string]$T, [string]$Colore = 'Gray') Write-Host $T -ForegroundColor $Colore }
 
@@ -133,14 +133,10 @@ if (-not (Test-Path (Join-Path $Dove 'app\System.Private.CoreLib.dll'))) {
 # --- 2. lo schermo virtuale ----------------------------------------------
 
 function Install-SchermoVirtuale {
-    param([string]$Da)
+    param([string]$Cartella)
 
-    if (-not (Test-Path (Join-Path $Da 'MttVDD.inf'))) {
-        Scrivi "  schermo   nel pacchetto non c'e' il driver: salto" 'Yellow'
-        Scrivi "            (senza, il tablet resta un deck e non un secondo monitor)" 'Yellow'
-        return
-    }
-
+    # Prima il controllo: uno schermo virtuale gia' installato - da TabDeck o
+    # a mano - si lascia com'e', file e impostazioni compresi.
     $gia = @(Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
              Where-Object { $_.FriendlyName -like '*Virtual Display Driver*' })
     if ($gia.Count -gt 0) {
@@ -148,11 +144,23 @@ function Install-SchermoVirtuale {
         return
     }
 
-    New-Item -ItemType Directory -Force $CasaDriver | Out-Null
-    Copy-Item (Join-Path $Da '*') $CasaDriver -Force
-    Scrivi "  driver    file in $CasaDriver"
+    # I file li ha portati il pacchetto in $Cartella; se non ci sono, si scaricano.
+    $scaricato = -not (Test-Path (Join-Path $Cartella 'MttVDD.inf'))
+    if ($scaricato) { Scrivi "  schermo   manca: scarico Virtual Display Driver $VddVersione" }
+    try {
+        [void](Get-DriverSchermo -Cartella $Cartella)
+    } catch {
+        Scrivi "  schermo   non riesco a scaricarlo: $($_.Exception.Message)" 'Red'
+        Scrivi "            Il deck e le luci funzionano lo stesso; manca solo il secondo monitor." 'Yellow'
+        Scrivi "            Con internet, rilancia Installa.ps1." 'Yellow'
+        return
+    }
+    Set-RisoluzioneTablet -Cartella $Cartella
+    Scrivi "  driver    file in $Cartella"
 
-    $inf = Join-Path $CasaDriver 'MttVDD.inf'
+    New-Item -Path $VddChiave -Force | Out-Null
+    Set-ItemProperty -Path $VddChiave -Name 'VDDPATH' -Value $Cartella
+    $inf = Join-Path $Cartella 'MttVDD.inf'
 
     # Prima nel magazzino driver di Windows, poi il nodo del dispositivo. Lo
     # schermo virtuale non e' una scheda che si attacca: nessun bus lo
@@ -173,7 +181,11 @@ function Install-SchermoVirtuale {
     $ora = @(Get-PnpDevice -Class Display -ErrorAction SilentlyContinue |
              Where-Object { $_.FriendlyName -like '*Virtual Display Driver*' })
     if ($ora.Count -gt 0) {
-        Scrivi "  schermo   $($ora[0].FriendlyName) - $($ora[0].Status)" 'Green'
+        # Appena creato e' acceso: un monitor in piu' sul desktop anche a tablet
+        # staccato. Lo si spegne; lo accende TabDeck quando serve, e trovandolo
+        # spento sa che e' suo da rispegnere.
+        foreach ($d in $ora) { Disable-PnpDevice -InstanceId $d.InstanceId -Confirm:$false -ErrorAction SilentlyContinue }
+        Scrivi "  schermo   $($ora[0].FriendlyName), spento finche' TabDeck non lo accende" 'Green'
     } else {
         Scrivi "  schermo   installato, ma Windows non lo elenca ancora: riavvia se non compare" 'Yellow'
     }
@@ -273,7 +285,7 @@ function Crea-Nodo {
 if ($SenzaDriver) {
     Scrivi "  schermo   saltato (-SenzaDriver)" 'Yellow'
 } else {
-    Install-SchermoVirtuale -Da (Join-Path $Dove 'driver\schermo')
+    Install-SchermoVirtuale -Cartella (Join-Path $Dove 'driver\schermo')
 }
 
 # --- 3. il driver USB del tablet -----------------------------------------

@@ -91,13 +91,23 @@ if (Test-Path $scelta) {
 # Senza, il tablet resta un deck: Windows non lascia trascinare una finestra
 # dove non c'e' un monitor, e il monitor lo crea questo driver.
 $driverA = Join-Path $Dove 'driver\schermo'
+. (Join-Path $sorgentiScript 'SchermoVirtuale.ps1')
 if (Test-Path (Join-Path $CasaDriver 'MttVDD.inf')) {
     New-Item -ItemType Directory -Force $driverA | Out-Null
     Copy-Item (Join-Path $CasaDriver '*') $driverA -Force
+    Set-RisoluzioneTablet -Cartella $driverA
     Scrivi "  schermo   Virtual Display Driver, da $CasaDriver" 'Green'
 } else {
-    Scrivi "  schermo   $CasaDriver non c'e': il pacchetto restera' senza driver" 'Yellow'
-    Scrivi "            si prende da github.com/VirtualDrivers/Virtual-Display-Driver" 'Yellow'
+    # Qui non c'e': lo si scarica, la stessa versione che Installa.ps1
+    # scaricherebbe di la'.
+    try {
+        [void](Get-DriverSchermo -Cartella $driverA)
+        Scrivi "  schermo   Virtual Display Driver $VddVersione, scaricato" 'Green'
+    } catch {
+        Remove-Item $driverA -Recurse -Force -ErrorAction SilentlyContinue
+        Scrivi "  schermo   non riesco a scaricarlo: $($_.Exception.Message)" 'Yellow'
+        Scrivi "            il pacchetto restera' senza: Installa.ps1 riprovera' di la'" 'Yellow'
+    }
 }
 
 # --- 4. il driver USB del tablet -----------------------------------------
@@ -235,7 +245,7 @@ if ($ConConfig) {
 # I .bat sono la porta d'ingresso: di la' un doppio clic su un .ps1 lo apre nel
 # Blocco note, e l'installazione vuole l'amministratore. I .ps1 restano, sotto,
 # per le opzioni.
-foreach ($f in @('Installa.ps1', 'Disinstalla.ps1', 'Avvio.ps1', 'Tablet.ps1',
+foreach ($f in @('Installa.ps1', 'Disinstalla.ps1', 'Avvio.ps1', 'Tablet.ps1', 'SchermoVirtuale.ps1',
                  'Installa.bat', 'Disinstalla.bat', 'Tablet.bat',
                  'Alleggerisci.bat', 'Ripristina.bat',
                  'LEGGIMI.txt', 'GUIDA.md')) {

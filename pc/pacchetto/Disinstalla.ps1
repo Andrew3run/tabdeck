@@ -98,6 +98,18 @@ if ($TieniDriver) {
         }
     }
 
+    # Il percorso dei file, che Installa.ps1 scrive per tenerli dentro TabDeck.
+    $chiave = 'HKLM:\SOFTWARE\MikeTheTech\VirtualDisplayDriver'
+    if (Test-Path $chiave) {
+        Remove-Item $chiave -Recurse -Force -ErrorAction SilentlyContinue
+        $padre = Split-Path $chiave
+        if (-not (Get-ChildItem $padre -ErrorAction SilentlyContinue)) {
+            Remove-Item $padre -Force -ErrorAction SilentlyContinue
+        }
+        Scrivi "  driver    chiave VDDPATH tolta" 'Green'
+    }
+
+    # Le installazioni di prima tenevano i file qui.
     if (Test-Path $CasaDriver) {
         Remove-Item $CasaDriver -Recurse -Force -ErrorAction SilentlyContinue
         Scrivi "  driver    $CasaDriver buttata" 'Green'

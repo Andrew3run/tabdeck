@@ -96,8 +96,13 @@ Installato: **Virtual Display Driver** (progetto `VirtualDrivers/Virtual-Display
 Il catalogo del driver e' firmato da SignPath Foundation con CA GlobalSign,
 quindi Windows lo accetta senza toccare nessun archivio di certificati.
 
-    C:\VirtualDisplayDriver\          MttVDD.inf, MttVDD.dll, mttvdd.cat
-    C:\VirtualDisplayDriver\vdd_settings.xml   risoluzioni, 1024x600 per prima
+    C:\TabDeck\driver\schermo\          MttVDD.inf, MttVDD.dll, mttvdd.cat
+    C:\TabDeck\driver\schermo\vdd_settings.xml   risoluzioni, 1024x600 per prima
+
+La cartella la dice al driver la chiave `HKLM\SOFTWARE\MikeTheTech\VirtualDisplayDriver`,
+valore `VDDPATH`; senza, il driver cerca in `C:\VirtualDisplayDriver`, dove
+stava sulle installazioni di prima. Lo mette `Installa.ps1`, scaricandolo se
+serve (`pc\pacchetto\SchermoVirtuale.ps1`).
 
 Il nodo del dispositivo si crea con `nefconw --create-device-node --class-name
 Display --hardware-id Root\MttVDD`, poi `pnputil /add-driver MttVDD.inf
@@ -549,8 +554,8 @@ Non si ripete la procedura: si fa un pacchetto e lo si porta di la'.
     .\pacchetto.ps1 -Exe
 
 Dentro finiscono il programma **con .NET compreso** (~150 MB: sul PC nuovo non
-c'e' niente da scaricare), `adb`, il Virtual Display Driver preso da
-`C:\VirtualDisplayDriver`, l'APK del tablet gia' compilato e `tablet\sistema`
+c'e' niente da scaricare), `adb`, il Virtual Display Driver (preso da
+`C:\VirtualDisplayDriver` se c'e', altrimenti scaricato), l'APK del tablet gia' compilato e `tablet\sistema`
 con i suoi due elenchi, cosi' di la' si puo' anche alleggerire. Con `-Leggero` il
 .NET resta fuori e il pacchetto scende a pochi megabyte, ma di la' serve il
 *.NET Desktop Runtime 10*. Con `-ConConfig` ci vanno anche deck e icone; le
@@ -582,8 +587,8 @@ loro il consenso dove serve. A mano, in un PowerShell **come amministratore**:
     .\Tablet.ps1          # installa l'app sul tablet, senza SDK di Android
 
 `Installa.ps1` fa quattro cose e le dice tutte mentre le fa: copia la cartella
-(la `config` che c'e' gia' non la tocca mai), mette il driver in
-`C:\VirtualDisplayDriver` e **crea il nodo del dispositivo** — lo schermo
+(la `config` che c'e' gia' non la tocca mai), se lo schermo virtuale manca mette il driver in
+`C:\TabDeck\driver\schermo`, scaricandolo se il pacchetto non ce l'ha, e **crea il nodo del dispositivo** — lo schermo
 virtuale non e' una scheda che si attacca, nessun bus lo annuncia, quindi il
 dispositivo va creato a mano sotto la radice; apre udp 8766 e 8767 nel firewall
 piu' il programma; fa le icone nel menu Start e sul desktop. Le tre chiamate a
@@ -595,7 +600,7 @@ Se il nodo non si crea, lo dice e va avanti: senza schermo virtuale restano il
 deck, le luci, il timer e la sveglia — manca solo il secondo monitor.
 
 `.\Disinstalla.ps1` disfa tutto: regole, icone, dispositivo, driver dal
-magazzino, cartella. Con `-TieniConfig` lascia il deck dov'e'.
+magazzino, chiave `VDDPATH`, cartella. Con `-TieniConfig` lascia il deck dov'e'.
 
 `Tablet.ps1` guarda il modello prima di installare: con due tablet attaccati,
 « il primo che adb elenca » installerebbe sul tablet sbagliato senza dire
