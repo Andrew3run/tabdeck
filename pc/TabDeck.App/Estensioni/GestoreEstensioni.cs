@@ -73,9 +73,12 @@ public sealed class Installata
 /// adb. Il tablet la accetta solo firmata con la chiave di TabDeck. Solo quando dice
 /// « pronta » l'estensione comincia a parlargli.</para>
 ///
-/// <para><b>Una accesa alla volta.</b> I frame da 0x51 a 0x5D non portano il nome
-/// di chi li manda: con due estensioni accese finirebbero l'uno nei pannelli
-/// dell'altra.</para>
+/// <para><b>Quante se ne vuole accese.</b> I frame da 0x51 a 0x5D non portano il nome
+/// di chi li manda, e allora lo mette TabDeck. Verso il tablet ogni frame JSON esce con
+/// « _e » = id dell'estensione, e il tablet lo consegna solo a lei. Verso il PC i frame
+/// di un'estensione partono dal suo pannello, che e' quello davanti: il tablet dice
+/// quale e' davanti (« davanti ») e il PC consegna a quella. Se il tablet non dice
+/// niente e ce n'e' una sola pronta, a lei.</para>
 /// </summary>
 public sealed partial class GestoreEstensioni : IDisposable
 {
@@ -94,6 +97,9 @@ public sealed partial class GestoreEstensioni : IDisposable
     private readonly Action salva;
     private readonly string radice;
     private readonly List<Installata> installate = new();
+
+    /// <summary>L'estensione che il tablet ha davanti, o vuoto. Chi la sceglie e' il tablet.</summary>
+    private volatile string davanti = "";
 
     /// <summary>Qualcosa e' cambiato: elenco, stato, tablet. Da qualunque thread.</summary>
     public event Action? Cambiato;
@@ -260,14 +266,6 @@ public sealed partial class GestoreEstensioni : IDisposable
     private void AccendiLocked(Installata installata)
     {
         if (installata.Accesa) return;
-        foreach (var altra in Elenco)
-        {
-            if (altra == installata || !altra.Accesa) continue;
-            Spegni(altra, annuncia: true);
-            Scelta(altra.Manifesto.Id).Accesa = false;
-            Log?.Invoke($"{altra.Manifesto.Nome} spenta: le estensioni si accendono una alla volta.");
-        }
-
         installata.Codice ??= new ContestoEstensione(installata.Manifesto.Id, installata.Cartella)
             .Principale(Path.Combine(installata.Cartella, installata.Manifesto.Assembly));
         var tipo = installata.Codice.GetType(installata.Manifesto.Tipo, throwOnError: false)
@@ -332,6 +330,7 @@ public sealed partial class GestoreEstensioni : IDisposable
 
     private void SuTablet(bool collegato)
     {
+        davanti = "";
         foreach (var installata in Elenco)
         {
             installata.Pronta = false;
@@ -379,10 +378,13 @@ public sealed partial class GestoreEstensioni : IDisposable
             SuRisposta(Encoding.UTF8.GetString(dati, 0, lunghezza));
             return;
         }
-        Installata[] tutte;
-        lock (installate) tutte = installate.ToArray();
-        foreach (var installata in tutte)
-            if (installata.Pronta) installata.Ospite?.Arriva(tipo, dati, lunghezza);
+        Installata[] pronte;
+        lock (installate) pronte = installate.Where(i => i.Pronta).ToArray();
+        string chi = davanti;
+        var scelta = chi.Length > 0 ? pronte.FirstOrDefault(i => i.Manifesto.Id == chi)
+                   : pronte.Length == 1 ? pronte[0]
+                   : null;
+        scelta?.Ospite?.Arriva(tipo, dati, lunghezza);
     }
 
     /// <summary>{"chiedi":"codice","id"}, {"pronta":id,"impronta"} o {"errore","id"} dal tablet.</summary>
@@ -398,6 +400,12 @@ public sealed partial class GestoreEstensioni : IDisposable
             return;
         }
         if (risposta is null) return;
+
+        if (risposta.ContainsKey("davanti"))
+        {
+            davanti = (string?)risposta["davanti"] ?? "";
+            return;
+        }
 
         string id = (string?)risposta["id"] ?? (string?)risposta["pronta"] ?? "";
         if (Trova(id) is not { Accesa: true } installata) return;
@@ -525,7 +533,25 @@ public sealed partial class GestoreEstensioni : IDisposable
         public void Manda(byte tipo, string json)
         {
             if (Viva && installata.Pronta && tipo > Proto.Plugin && tipo < Proto.PluginCodice)
-                gestore.engine.MandaPlugin(tipo, json);
+                gestore.engine.MandaPlugin(tipo, Etichetta(json));
+        }
+
+        /// <summary>Il tablet consegna il frame solo all'estensione scritta qui.</summary>
+        private string Etichetta(string json)
+        {
+            try
+            {
+                if (JsonNode.Parse(json) is JsonObject oggetto)
+                {
+                    oggetto["_e"] = installata.Manifesto.Id;
+                    return oggetto.ToJsonString();
+                }
+            }
+            catch (JsonException)
+            {
+                // Non e' un oggetto JSON: parte com'e', e il tablet lo da' a tutte come una volta.
+            }
+            return json;
         }
 
         public void MostraSulTablet()

@@ -132,7 +132,7 @@ public partial class MainWindow
         if (deckFile.Cerca(p.Profilo) is not null) CambiaProfilo(p.Profilo);
         if (volute is not null && estensioni is not null)
         {
-            // Prima si spegne: si accende una estensione alla volta.
+            // Prima si spengono quelle che la postazione non vuole.
             foreach (var i in estensioni.Elenco.Where(i => i.Accesa && !volute.Contains(i.Manifesto.Id)))
                 estensioni.Accendi(i.Manifesto.Id, false);
             foreach (var i in estensioni.Elenco.Where(i => !i.Accesa && volute.Contains(i.Manifesto.Id)))

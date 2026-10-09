@@ -787,6 +787,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         applyAwake();
 
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putInt(KEY_MODE, next).apply();
+        dicoDavanti(false);
         if (announce) sendReady();
     }
 
@@ -1031,6 +1032,8 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         // resterebbe solo la maniglia, davanti a una griglia che non ha
         // chiesto nessuno di nascondere.
         if (!connected) schermoAcceso = false;
+        // Il PC perde il "davanti" a ogni collegamento: lo si ridice.
+        if (connected) dicoDavanti(true);
         // Collegarsi o staccarsi cambia la scelta delle sezioni: quella col PC o quella senza.
         applicaSezioni(mode != MODE_SCREEN);
         if (!connected && mode == MODE_SCREEN) {
@@ -1350,6 +1353,41 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
         return v;
     }
 
+    /**
+     * Un frame dal PC: porta in « _e » l'id dell'estensione a cui va. Senza (un PC di prima)
+     * lo ricevono tutte quelle visibili.
+     */
+    private void consegnaAEstensione(int type, String json) {
+        String per = "";
+        try {
+            per = new JSONObject(json).optString("_e", "");
+        } catch (JSONException ignored) {
+            // Non e' un oggetto: va a tutte, come prima.
+        }
+        for (Voce v : voci.values()) {
+            if (v.tab.view.getVisibility() != View.VISIBLE) continue;
+            if (per.length() == 0 || per.equals(v.id)) v.plugin.suFrame(type, json);
+        }
+    }
+
+    /** L'ultima estensione detta al PC come « davanti »: il PC gli consegna i frame di chi sta usando. */
+    private String ultimoDavanti = "";
+
+    /**
+     * Dice al PC quale estensione ha davanti (o nessuna): i frame dei pannelli partono tutti
+     * dal tablet senza nome, e il PC li consegna a quella.
+     */
+    private void dicoDavanti(boolean sempre) {
+        String chi = mode == MODE_ESTENSIONE && voceDavanti() != null ? estensioneDavanti : "";
+        if (!sempre && chi.equals(ultimoDavanti)) return;
+        ultimoDavanti = chi;
+        try {
+            link.sendJson(Proto.PLUGIN, new JSONObject().put("davanti", chi).toString());
+        } catch (JSONException ignored) {
+            // Chiavi e valori li scrive questo codice.
+        }
+    }
+
     private void apriEstensione(String id) {
         estensioneDavanti = id;
         getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(KEY_ESTENSIONE, id).apply();
@@ -1639,9 +1677,7 @@ public final class MainActivity extends Activity implements Link.Listener, Ora.A
                     break;
                 default:
                     if (type > Proto.PLUGIN && type <= Proto.PLUGIN_ULTIMO) {
-                        for (Voce v : voci.values()) {
-                            if (v.tab.view.getVisibility() == View.VISIBLE) v.plugin.suFrame(type, json);
-                        }
+                        consegnaAEstensione(type, json);
                     } else {
                         Log.w(TAG, "frame di tipo sconosciuto: " + type);
                     }

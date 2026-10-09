@@ -710,8 +710,7 @@ Un'estensione ha due parti, e il file le porta insieme:
   chiave di TabDeck — la rete la apre chiunque stia sul Wi-Fi — e lo carica accanto al suo codice. Sul tablet le estensioni stanno dietro una voce sola, **App**, che apre una griglia con una tessera per estensione.
 
 L'APK di TabDeck non contiene nessuna estensione. Rimossa sul PC, sparisce anche
-dal tablet, subito se e' collegato o al collegamento dopo se non lo e'. Se ne
-accende una alla volta: i frame da 0x51 a 0x5D non dicono di chi sono.
+dal tablet, subito se e' collegato o al collegamento dopo se non lo e'. Se ne accendono quante si vuole: TabDeck scrive l'id dell'estensione in ogni frame verso il tablet (`_e`) e consegna ai suoi pannelli solo i frame che le spettano; dal tablet i frame vanno all'estensione che ha il pannello davanti. Un'estensione non deve fare niente per questo.
 
 Un'estensione **non sta in questa cartella**: e' un progetto a se', accanto, che
 compila contro TabDeck ma che TabDeck non conosce.
