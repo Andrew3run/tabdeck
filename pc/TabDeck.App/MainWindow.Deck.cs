@@ -1370,7 +1370,7 @@ public partial class MainWindow
                        ElencoArgomenti, CollegamentoAzione);
 
         BtnCattura.Visibility = tipo.Cattura ? Visibility.Visible : Visibility.Collapsed;
-        BtnSfoglia.Visibility = tipo.Codice == "run" ? Visibility.Visible : Visibility.Collapsed;
+        BtnSfoglia.Visibility = tipo.Codice is "run" or "apri" ? Visibility.Visible : Visibility.Collapsed;
         if (!tipo.Cattura) BtnCattura.IsChecked = false;
 
         if (cartella) AggiornaRiquadroCartella();
@@ -1697,7 +1697,7 @@ public partial class MainWindow
 
     private void Sfoglia_Click(object sender, RoutedEventArgs e)
     {
-        string? scelto = ScegliProgramma();
+        string? scelto = TipoAzioneScelto().Codice == "apri" ? ScegliCartella() : ScegliProgramma();
         if (scelto is null) return;
 
         Ricorda();
@@ -1707,7 +1707,16 @@ public partial class MainWindow
         // Photoshop.exe vuole quasi sempre che si chiami Photoshop, e cambiarlo
         // resta piu' facile che scriverlo.
         if (CampoEtichetta.Text is "" or "Nuovo")
-            CampoEtichetta.Text = Path.GetFileNameWithoutExtension(scelto);
+            CampoEtichetta.Text = Directory.Exists(scelto)
+                ? Path.GetFileName(scelto.TrimEnd('\\'))
+                : Path.GetFileNameWithoutExtension(scelto);
+    }
+
+    /// <summary>La cartella da aprire, scelta dalla finestra di Windows.</summary>
+    private string? ScegliCartella()
+    {
+        var finestra = new Microsoft.Win32.OpenFolderDialog { Title = "Cartella da aprire" };
+        return finestra.ShowDialog(this) == true ? finestra.FolderName : null;
     }
 
     // ---- icona del pulsante ----
@@ -2811,7 +2820,7 @@ public partial class MainWindow
         var tipo = TipoPassoScelto();
         EtichettaValorePasso.Text = tipo.EtichettaValore;
         AiutoPasso.Text = tipo.Aiuto;
-        BtnSfogliaPasso.Visibility = tipo.Codice == "run" ? Visibility.Visible : Visibility.Collapsed;
+        BtnSfogliaPasso.Visibility = tipo.Codice is "run" or "apri" ? Visibility.Visible : Visibility.Collapsed;
 
         // Una sequenza annidata non ha un valore da riempire: ha dei passi, e
         // quelli si guardano entrandoci.
@@ -2995,7 +3004,7 @@ public partial class MainWindow
 
     private void SfogliaPasso_Click(object sender, RoutedEventArgs e)
     {
-        string? scelto = ScegliProgramma();
+        string? scelto = TipoPassoScelto().Codice == "apri" ? ScegliCartella() : ScegliProgramma();
         if (scelto is null) return;
         Ricorda();
         CampoValorePasso.Text = scelto;

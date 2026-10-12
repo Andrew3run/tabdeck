@@ -83,10 +83,22 @@ public sealed class ActionRunner
                     break;
 
                 case "run":
+                    string programma = Environment.ExpandEnvironmentVariables(action.Value.Trim());
+                    // Una cartella scritta come programma: la si apre, invece
+                    // di far chiedere all'utente di passare da explorer.exe.
+                    if (Directory.Exists(programma.Trim('"')))
+                    {
+                        Apri(programma);
+                        break;
+                    }
                     Process.Start(new ProcessStartInfo(
-                        Environment.ExpandEnvironmentVariables(action.Value.Trim()),
+                        programma,
                         Environment.ExpandEnvironmentVariables(action.Args))
                     { UseShellExecute = true });
+                    break;
+
+                case "apri":
+                    Apri(Environment.ExpandEnvironmentVariables(action.Value.Trim()));
                     break;
 
                 case "url":
@@ -197,6 +209,16 @@ public sealed class ActionRunner
                 tenuti.Remove(vk);
             }
         }
+    }
+
+    /// <summary>
+    /// Una cartella in Esplora file, un file con il programma associato. Le
+    /// virgolette di chi ha incollato il percorso da « Copia come percorso » si
+    /// tolgono: con quelle ShellExecute non trova niente.
+    /// </summary>
+    private static void Apri(string percorso)
+    {
+        Process.Start(new ProcessStartInfo(percorso.Trim().Trim('"')) { UseShellExecute = true });
     }
 
     /// <summary>

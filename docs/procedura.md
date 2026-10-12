@@ -249,7 +249,8 @@ perdendo anche tutto il resto.
 | Combinazione di tasti | `ctrl+shift+m`, `alt+f4`, `win+d` — oppure **Cattura**, e la premi |
 | Tasto multimediale | si sceglie dall'elenco: `playpause`, `next`, `prev`, `mute`, `volup`, `voldown` |
 | Scrivi un testo | qualsiasi stringa, indipendente dalla disposizione tastiera |
-| Avvia un programma | `explorer.exe`, `code`, con argomenti; **Sfoglia** apre il disco |
+| Avvia un programma | `explorer.exe`, `code`, con argomenti; **Sfoglia** apre il disco. Una cartella al posto del programma si apre in Esplora file |
+| Apri cartella o file | solo il percorso; **Sfoglia** sceglie una cartella. La cartella si apre in Esplora file, un file con il suo programma |
 | Apri un indirizzo | aperto nel browser predefinito |
 | Clic del mouse | sinistro, destro, centrale o doppio, dove si trova il puntatore |
 | Rotella del mouse | da -20 a 20 tacche, positivo verso l'alto |

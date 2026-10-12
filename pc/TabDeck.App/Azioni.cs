@@ -59,6 +59,12 @@ public static class Azioni
             "Percorso del programma da avviare, per esempio explorer.exe oppure code. Le variabili come %USERPROFILE% vengono espanse. Gli argomenti vanno nel campo sotto.",
             HaArgomenti: true),
 
+        // Prima per aprire una cartella si sceglieva « Avvia », si scriveva
+        // explorer.exe e si metteva il percorso negli argomenti: tre passi per
+        // una cosa sola. Qui basta il percorso, e « Sfoglia » sceglie cartelle.
+        new("apri", "Apri cartella o file", "Percorso",
+            "Una cartella si apre in Esplora file, un file con il suo programma."),
+
         new("url", "Apri un indirizzo", "Indirizzo",
             "Un indirizzo, aperto nel browser predefinito. Senza http:// davanti viene aggiunto https://."),
 
@@ -213,7 +219,18 @@ public static class Azioni
 
             case "run":
                 if (valore.Length == 0) return "Manca il programma da avviare.";
-                return Trovabile(valore) ? "" : $"Non trovo '{valore}': verra' provato lo stesso, ma probabilmente fallira'.";
+                // Una cartella al posto del programma si apre lo stesso: e' la
+                // cosa che uno si aspetta, e ActionRunner la apre in Esplora file.
+                return Trovabile(valore) || Directory.Exists(Environment.ExpandEnvironmentVariables(valore.Trim('"')))
+                    ? ""
+                    : $"Non trovo '{valore}': verra' provato lo stesso, ma probabilmente fallira'.";
+
+            case "apri":
+                if (valore.Length == 0) return "Manca il percorso.";
+                string percorso = Environment.ExpandEnvironmentVariables(valore.Trim('"'));
+                return Directory.Exists(percorso) || File.Exists(percorso)
+                    ? ""
+                    : $"Non trovo '{valore}'.";
 
             case "url":
                 return valore.Length == 0 ? "Manca l'indirizzo." : "";
@@ -313,6 +330,7 @@ public static class Azioni
             "media" => "Media",
             "text" => "Scrivi",
             "run" => "Avvia",
+            "apri" => "Apri",
             "url" => "Apri",
             "delay" => "Aspetta",
             "click" => "Clic",
